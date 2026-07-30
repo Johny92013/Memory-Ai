@@ -1,0 +1,3 @@
+-- Applied via Supabase MCP as migration create_families_and_members
+-- Project: bgxijzdycxntctoeeitb
+-- See remote migration history in Supabase dashboard.

@@ -1,0 +1,6 @@
+# Nur Vorlage – echte Werte stehen in android/key.properties (gitignored).
+# Keystore ausschließlich für lokales Sideload-Testen, kein Play-Store-Schlüssel.
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=memoryai_local_test
+storeFile=../keystore/memoryai-local-test.jks

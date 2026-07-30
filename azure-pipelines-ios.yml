@@ -1,0 +1,45 @@
+# Azure Pipelines – macOS IPA (optional, falls Azure statt GitHub genutzt wird)
+# Voraussetzungen: macOS-Agent, Secure Files / Variable Group mit DOTENV_FILE
+
+trigger: none
+
+pool:
+  vmImage: macos-15
+
+variables:
+  FLUTTER_VERSION: "3.44.1"
+  APP_VERSION: "1.0.0"
+  BUILD_NUMBER: "1"
+
+steps:
+  - task: FlutterInstall@0
+    inputs:
+      mode: "auto"
+      channel: "stable"
+      version: $(FLUTTER_VERSION)
+    # Falls Extension fehlt: Flutter manuell installieren.
+
+  - script: |
+      set -euo pipefail
+      if [ -z "${DOTENV_FILE:-}" ]; then
+        echo "Variable DOTENV_FILE fehlt"
+        exit 1
+      fi
+      printf '%s\n' "$DOTENV_FILE" > .env
+      flutter pub get
+      cd ios && pod install && cd ..
+      flutter build ios --release --no-codesign \
+        --build-name=$(APP_VERSION) --build-number=$(BUILD_NUMBER)
+      APP_PATH="$(find build/ios/iphoneos -name '*.app' -maxdepth 1 | head -n 1)"
+      mkdir Payload
+      cp -R "$APP_PATH" Payload/
+      mkdir -p release/1.0.0
+      zip -r "release/1.0.0/MemoryAI-$(APP_VERSION)+$(BUILD_NUMBER)-unsigned.ipa" Payload
+    displayName: Build unsigned IPA
+    env:
+      DOTENV_FILE: $(DOTENV_FILE)
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: "release/1.0.0"
+      ArtifactName: "MemoryAI-1.0.0-ipa"

@@ -1,0 +1,43 @@
+---
+description: Entwicklungsregeln für die Family-Memories-App
+alwaysApply: true
+---
+
+# Projekt
+
+Private Familien-Messenger- und Erinnerungs-App (Family Memories AI).
+
+# Technologien
+
+- Flutter und Dart
+- Supabase für Auth, Datenbank und Storage
+- OpenStreetMap für Karten
+- FFmpeg für Videoerstellung
+- Android und später iOS
+
+# Entwicklungsregeln
+
+- Feature-basierte Ordnerstruktur unter `lib/features/`
+- Übersichtlicher Dart-Code, null safety
+- Keine unnötig komplizierte Architektur
+- Nach Änderungen `flutter analyze` ausführen
+- Nicht mehrere große Bereiche gleichzeitig ändern
+- Keine geheimen API-Schlüssel im Quellcode
+- Familieninhalte immer über `family_id` trennen
+- Datenbankzugriffe später mit Row Level Security absichern
+- Kinderfotos und private Inhalte niemals öffentlich zugänglich machen
+
+# Design
+
+- Modernes, freundliches Familiendesign
+- Große, gut lesbare Bedienelemente
+- Hell- und Dunkelmodus
+- Navigation: Start, Erinnerungen, Karte, Chat, Profil
+
+# MVP-Reihenfolge
+
+1. Auth (Login/Registrierung)
+2. Familie erstellen und einladen
+3. Foto-Upload und Cloud
+4. Timeline und Alben
+5. Weltkarte, Videos, KI erst danach

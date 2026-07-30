@@ -1,0 +1,164 @@
+name: iOS IPA 1.0.0
+
+# Baut eine IPA auf macOS (GitHub-hosted).
+# Standard: unsigned IPA für Sideloadly (Apple-ID-Signing erfolgt in Sideloadly).
+# Optional: signierte IPA, wenn Apple-Zertifikat + Provisioning Profile als Secrets gesetzt sind.
+
+on:
+  workflow_dispatch:
+    inputs:
+      signed:
+        description: "Signierte IPA bauen (braucht Apple Secrets)"
+        type: boolean
+        default: false
+      export_method:
+        description: "Export-Methode bei signed=true"
+        type: choice
+        options:
+          - development
+          - ad-hoc
+          - app-store
+        default: development
+
+permissions:
+  contents: read
+
+jobs:
+  build-ipa:
+    name: Build IPA on macOS
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write .env from secret
+        env:
+          ENV_FILE: ${{ secrets.DOTENV_FILE }}
+        run: |
+          if [ -z "$ENV_FILE" ]; then
+            echo "::error::Secret DOTENV_FILE fehlt (Inhalt der .env: SUPABASE_URL + SUPABASE_PUBLISHABLE_KEY)."
+            exit 1
+          fi
+          printf '%s\n' "$ENV_FILE" > .env
+          echo ".env geschrieben (Inhalt nicht geloggt)."
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.44.1"
+          cache: true
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          dart format --set-exit-if-changed .
+          flutter analyze
+          flutter test
+
+      - name: CocoaPods
+        working-directory: ios
+        run: |
+          pod repo update
+          pod install
+
+      - name: Build unsigned iOS (Sideloadly)
+        if: ${{ inputs.signed == false }}
+        run: |
+          flutter build ios --release --no-codesign \
+            --build-name=1.0.0 --build-number=1
+
+      - name: Package unsigned IPA
+        if: ${{ inputs.signed == false }}
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find build/ios/iphoneos -name '*.app' -maxdepth 1 | head -n 1)"
+          if [ -z "$APP_PATH" ]; then
+            echo "::error::Keine .app unter build/ios/iphoneos gefunden."
+            exit 1
+          fi
+          rm -rf Payload
+          mkdir Payload
+          cp -R "$APP_PATH" Payload/
+          mkdir -p release/1.0.0
+          zip -r "release/1.0.0/MemoryAI-1.0.0+1-unsigned.ipa" Payload
+          ls -lh release/1.0.0/
+
+      - name: Import Apple signing material
+        if: ${{ inputs.signed == true }}
+        env:
+          CERT_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          for v in CERT_P12_BASE64 CERT_PASSWORD PROFILE_BASE64 KEYCHAIN_PASSWORD TEAM_ID; do
+            if [ -z "${!v}" ]; then
+              echo "::error::Secret $v fehlt für signed Build."
+              exit 1
+            fi
+          done
+
+          CERT_PATH="$RUNNER_TEMP/certificate.p12"
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          echo "$CERT_P12_BASE64" | base64 --decode > "$CERT_PATH"
+          echo "$PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$CERT_PASSWORD" -A -t cert -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' /dev/stdin <<< "$(security cms -D -i "$PROFILE_PATH")")
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+          echo "APPLE_TEAM_ID=$TEAM_ID" >> "$GITHUB_ENV"
+
+      - name: Build signed IPA
+        if: ${{ inputs.signed == true }}
+        run: |
+          set -euo pipefail
+          METHOD="${{ inputs.export_method }}"
+          case "$METHOD" in
+            development) PLIST=ios/ExportOptions-development.plist ;;
+            ad-hoc) PLIST=ios/ExportOptions-ad-hoc.plist ;;
+            app-store) PLIST=ios/ExportOptions-app-store.plist ;;
+            *) echo "Unbekannte Methode $METHOD"; exit 1 ;;
+          esac
+
+          # Team-ID in ExportOptions einsetzen
+          /usr/libexec/PlistBuddy -c "Set :teamID $APPLE_TEAM_ID" "$PLIST" || \
+            /usr/libexec/PlistBuddy -c "Add :teamID string $APPLE_TEAM_ID" "$PLIST"
+
+          flutter build ipa \
+            --build-name=1.0.0 --build-number=1 \
+            --export-options-plist="$PLIST"
+
+          mkdir -p release/1.0.0
+          IPA="$(find build/ios/ipa -name '*.ipa' | head -n 1)"
+          if [ -z "$IPA" ]; then
+            echo "::error::Keine signierte IPA gefunden."
+            exit 1
+          fi
+          cp "$IPA" "release/1.0.0/MemoryAI-1.0.0+1-signed.ipa"
+          ls -lh release/1.0.0/
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MemoryAI-1.0.0-ipa
+          path: release/1.0.0/*.ipa
+          if-no-files-found: error
+          retention-days: 14
