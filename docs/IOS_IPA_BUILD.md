@@ -58,7 +58,7 @@ oder auf dem Mac:
 
 ## Bundle Identifier
 
-Aktuell: `com.example.memoryAi`  
+Aktuell: `com.johny92013.memoryai`  
 Für echte Distribution später ändern; für Sideloadly/lokales Testen oft ok.
 
 ## Was fehlt aktuell zum erfolgreichen CI-Build

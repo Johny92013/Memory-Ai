@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Require DOTENV_FILE and write .env
         env:
@@ -42,7 +42,7 @@ jobs:
           printf '%s\n' "$DOTENV_FILE" > .env
           echo ".env written from DOTENV_FILE (contents not logged)."
 
-      - name: Report Bundle ID (sideload warning only)
+      - name: Report Bundle ID
         run: |
           set -euo pipefail
           FOUND="$(grep -E 'PRODUCT_BUNDLE_IDENTIFIER = ' ios/Runner.xcodeproj/project.pbxproj \
@@ -51,12 +51,7 @@ jobs:
             | sed -E 's/.*= ([^;]+);/\1/' \
             | tr -d ' ')"
           echo "Xcode PRODUCT_BUNDLE_IDENTIFIER: ${FOUND}"
-          case "$FOUND" in
-            com.example.*)
-              echo "::warning::Placeholder Bundle ID detected: ${FOUND}"
-              ;;
-          esac
-          echo "Warning: This IPA is intended only for personal sideloading and is not App Store ready."
+          echo "This IPA is intended only for personal sideloading and is not App Store ready."
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -145,10 +140,10 @@ jobs:
           fi
 
           ls -lh "$IPA"
-          echo "Warning: This IPA is intended only for personal sideloading and is not App Store ready."
+          echo "This IPA is intended only for personal sideloading and is not App Store ready."
 
       - name: Upload unsigned IPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: memory-ai-1.0.0-unsigned-ipa-sideloadly
           path: build/ios/sideload/Memory-AI-1.0.0-unsigned.ipa

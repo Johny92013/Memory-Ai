@@ -7,7 +7,7 @@
 | Workflow-Datei | `.github/workflows/release.yml` |
 | macOS-Runner | `macos-15` |
 | Flutter-Version | `3.44.1` (lokal bestätigt; kein FVM) |
-| iOS Bundle Identifier | `com.example.memoryAi` (Platzhalter – CI bricht bewusst ab) |
+| iOS Bundle Identifier | `com.johny92013.memoryai` |
 | Apple Team ID vorhanden | unbekannt (Secret `IOS_TEAM_ID` erforderlich) |
 | DOTENV_FILE vorhanden | erforderlich / Status in GitHub unbekannt |
 | Android-Job entfernt | Ja |

@@ -40,7 +40,7 @@ Die IPA ist **nicht** für App Store oder TestFlight gedacht. Sideloadly überni
 - App-Daten können bei einer normalen Aktualisierung erhalten bleiben, sollten aber vorher gesichert werden.
 - Kostenlose Apple-Konten haben Begrenzungen bei Apps und Geräten.
 - Keine App-Store- oder TestFlight-Nutzung möglich.
-- Bundle-IDs wie `com.example.*` sind für Sideloading oft akzeptabel; Sideloadly kann neu signieren. Die App ist dadurch **nicht** App-Store-fertig.
+- iOS Bundle-ID: `com.johny92013.memoryai`. Sideloadly signiert die IPA neu. Die App ist **nicht** App-Store-fertig.
 
 ## Technischer Hintergrund (GitHub Actions)
 

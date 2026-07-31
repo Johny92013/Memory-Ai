@@ -65,7 +65,7 @@ Fehlende Secrets oder fehlende Build-Dateien → Job schlägt fehl (`if-no-files
 | `IOS_PROVISIONING_PROFILE_BASE64` | Base64 der `.mobileprovision` |
 | `IOS_KEYCHAIN_PASSWORD` | beliebiges Passwort für temporäres Runner-Keychain |
 | `IOS_TEAM_ID` | 10-stellige Apple Team ID |
-| `IOS_BUNDLE_ID` | muss exakt `com.example.memoryAi` entsprechen (aktueller Projektwert) **oder** nach Bundle-ID-Änderung den neuen Wert |
+| `IOS_BUNDLE_ID` | (nur für signierte Builds) `com.johny92013.memoryai` |
 
 Optional (nicht für diesen Workflow nötig): `APPLE_ID`, `APP_SPECIFIC_PASSWORD`, App Store Connect API Keys.
 
@@ -163,7 +163,7 @@ Häufig:
 Aktuell im Projekt:
 
 - Android `applicationId`: `com.example.memory_ai`
-- iOS Bundle ID: `com.example.memoryAi`
+- iOS Bundle ID: `com.johny92013.memoryai`
 
 Das sind Flutter-Platzhalter. Für echte Store-Einreichung eigene IDs registrieren und im Projekt + Secrets anpassen. Für CI muss `IOS_BUNDLE_ID` dem Xcode-Wert entsprechen und das Provisioning Profile denselben Identifier abdecken.
 
