@@ -1,24 +1,19 @@
-import 'package:image_picker/image_picker.dart';
-import 'package:memory_ai/core/constants/storage_constants.dart';
 import 'package:memory_ai/core/errors/app_exception.dart';
 import 'package:memory_ai/core/errors/error_mapper.dart';
-import 'package:memory_ai/core/services/image_service.dart';
 import 'package:memory_ai/core/services/supabase_service.dart';
 import 'package:memory_ai/features/memories/data/album_model.dart';
-import 'package:memory_ai/features/memories/data/image_compression_service.dart';
-import 'package:memory_ai/features/memories/data/image_exif_reader.dart';
+import 'package:memory_ai/features/memories/data/album_repository.dart';
 import 'package:memory_ai/features/memories/data/media_item_model.dart';
+import 'package:memory_ai/features/memories/data/media_repository.dart';
 import 'package:memory_ai/features/memories/data/memory_model.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
-/// Fortschritt eines Foto-Uploads (0.0 – 1.0) inkl. Status-Text.
-typedef UploadProgressCallback = void Function(double progress, String label);
-
-/// Datenzugriff auf Erinnerungen und Familienfotos.
+/// Legacy-Fassade: liest/schreibt nur noch über `media_items`.
+/// Die Tabelle `memories` wurde zu `memories_deprecated` umbenannt.
 class MemoriesRepository {
-  MemoriesRepository();
+  MemoriesRepository({MediaRepository? mediaRepository})
+    : _mediaRepo = mediaRepository ?? MediaRepository();
 
+  final MediaRepository _mediaRepo;
   static final _client = SupabaseService.client;
 
   String get _userId {
@@ -32,101 +27,41 @@ class MemoriesRepository {
   Future<List<MemoryModel>> listMemories(String familyId) async {
     try {
       final rows = await _client
-          .from('memories')
+          .from('media_items')
           .select()
           .eq('family_id', familyId)
           .order('taken_at', ascending: false)
           .order('created_at', ascending: false);
 
       return (rows as List)
-          .map(
-            (row) =>
-                MemoryModel.fromJson(Map<String, dynamic>.from(row as Map)),
-          )
+          .map((row) => _fromMediaJson(Map<String, dynamic>.from(row as Map)))
           .toList();
     } catch (error) {
       throw ErrorMapper.map(error);
     }
   }
 
-  /// Lädt ein Familienfoto hoch: EXIF → Kompression → Storage → memories.
+  /// Veraltet: Upload läuft über [MediaRepository] / UploadPhotosScreen.
+  @Deprecated('Nutze MediaRepository.uploadPhoto / /memories/upload')
   Future<MemoryModel> uploadFamilyPhoto({
     required String familyId,
-    required XFile file,
+    required dynamic file,
     String? title,
     String? description,
-    UploadProgressCallback? onProgress,
+    void Function(double progress, String label)? onProgress,
   }) async {
-    void report(double value, String label) => onProgress?.call(value, label);
-
-    try {
-      final userId = _userId;
-      report(0.05, 'Foto wird gelesen …');
-      final originalBytes = await file.readAsBytes();
-      final sourceMime = ImageService.detectMimeType(file, originalBytes);
-      ImageService.validateImageBytes(originalBytes, sourceMime);
-
-      report(0.15, 'Metadaten werden gelesen …');
-      final exif = await ImageExifReader.read(originalBytes);
-      final takenAt = exif.takenAt ?? DateTime.now();
-
-      report(0.3, 'Foto wird optimiert …');
-      final compressed = ImageCompressionService.compressForUpload(
-        bytes: originalBytes,
-        sourceMimeType: sourceMime,
-      );
-      ImageService.validateImageBytes(compressed.bytes, compressed.mimeType);
-
-      final fileId = const Uuid().v4();
-      final storagePath = StorageConstants.familyImagePath(
-        familyId: familyId,
-        userId: userId,
-        fileId: fileId,
-        extension: compressed.extension,
-      );
-
-      report(0.55, 'Foto wird hochgeladen …');
-      await _client.storage
-          .from(StorageConstants.familyImages)
-          .uploadBinary(
-            storagePath,
-            compressed.bytes,
-            fileOptions: FileOptions(
-              contentType: compressed.mimeType,
-              upsert: false,
-            ),
-          );
-
-      report(0.85, 'Erinnerung wird gespeichert …');
-      final row = await _client
-          .from('memories')
-          .insert({
-            'family_id': familyId,
-            'created_by': userId,
-            'media_type': 'image',
-            'storage_path': storagePath,
-            'taken_at': takenAt.toUtc().toIso8601String(),
-            if (exif.latitude != null) 'latitude': exif.latitude,
-            if (exif.longitude != null) 'longitude': exif.longitude,
-            if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
-            if (description != null && description.trim().isNotEmpty)
-              'description': description.trim(),
-          })
-          .select()
-          .single();
-
-      report(1.0, 'Fertig');
-      return MemoryModel.fromJson(Map<String, dynamic>.from(row));
-    } catch (error) {
-      throw ErrorMapper.map(error);
-    }
+    throw const AppException(
+      message:
+          'Der Legacy-Upload ist deaktiviert. Bitte nutze „Erinnerung hinzufügen“ '
+          '(media_items).',
+    );
   }
 
   Future<void> deleteMemory(String memoryId) async {
     try {
       final row = await _client
-          .from('memories')
-          .select('created_by, storage_path')
+          .from('media_items')
+          .select('owner_id, storage_path, thumbnail_path')
           .eq('id', memoryId)
           .maybeSingle();
 
@@ -135,44 +70,69 @@ class MemoriesRepository {
       }
 
       final map = Map<String, dynamic>.from(row);
-      if (map['created_by'] as String != _userId) {
+      if (map['owner_id'] as String != _userId) {
         throw const AppException(
           message: 'Du kannst nur eigene Erinnerungen löschen.',
         );
       }
 
-      final storagePath = map['storage_path'] as String?;
-      if (storagePath != null && storagePath.isNotEmpty) {
-        await _client.storage.from(StorageConstants.familyImages).remove([
-          storagePath,
-        ]);
-      }
-
-      await _client.from('memories').delete().eq('id', memoryId);
+      await _client.from('media_items').delete().eq('id', memoryId);
     } catch (error) {
       throw ErrorMapper.map(error);
     }
   }
 
-  Future<List<AlbumModel>> listAlbums(String familyId) async => [];
+  Future<List<AlbumModel>> listAlbums(String familyId) {
+    return AlbumRepository().listAlbums(familyId: familyId);
+  }
 
-  Future<List<MediaItemModel>> listMedia(String familyId) async => [];
+  Future<List<MediaItemModel>> listMedia(String familyId) {
+    return _mediaRepo.listAccessibleMedia(familyId: familyId);
+  }
 
   Future<MemoryModel?> getMemory(String id) async {
     try {
       final row = await _client
-          .from('memories')
+          .from('media_items')
           .select()
           .eq('id', id)
           .maybeSingle();
       if (row == null) return null;
-      return MemoryModel.fromJson(Map<String, dynamic>.from(row));
+      return _fromMediaJson(Map<String, dynamic>.from(row));
     } catch (error) {
       throw ErrorMapper.map(error);
     }
   }
 
-  Future<AlbumModel?> getAlbum(String id) async => null;
+  Future<AlbumModel?> getAlbum(String id) {
+    return AlbumRepository().getAlbum(id);
+  }
 
-  Future<MediaItemModel?> getMediaItem(String id) async => null;
+  Future<MediaItemModel?> getMediaItem(String id) {
+    return _mediaRepo.getAccessibleMediaItem(id);
+  }
+
+  MemoryModel _fromMediaJson(Map<String, dynamic> json) {
+    return MemoryModel(
+      id: json['id'] as String,
+      familyId: json['family_id'] as String? ?? '',
+      createdBy: json['owner_id'] as String? ?? '',
+      title: json['title'] as String?,
+      description: json['description'] as String?,
+      mediaType: json['media_type'] as String? ?? 'image',
+      storagePath: json['storage_path'] as String?,
+      takenAt: json['taken_at'] != null
+          ? DateTime.tryParse(json['taken_at'].toString())
+          : null,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      locationName: json['location_name'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString())
+          : null,
+    );
+  }
 }

@@ -5,12 +5,16 @@ import 'package:memory_ai/app/app_radius.dart';
 import 'package:memory_ai/app/app_spacing.dart';
 import 'package:memory_ai/app/theme_extensions.dart';
 import 'package:memory_ai/core/errors/error_mapper.dart';
+import 'package:memory_ai/core/services/signed_url_service.dart';
+import 'package:memory_ai/features/memories/data/media_repository.dart';
+import 'package:memory_ai/features/trips/data/trip_member_model.dart';
 import 'package:memory_ai/features/trips/data/trip_model.dart';
 import 'package:memory_ai/features/trips/data/trip_repository.dart';
 import 'package:memory_ai/features/trips/data/trip_role_permissions.dart';
+import 'package:memory_ai/features/trips/widgets/add_traveler_button.dart';
+import 'package:memory_ai/features/trips/widgets/trip_hero_header.dart';
 import 'package:memory_ai/shared/widgets/app_button.dart';
 import 'package:memory_ai/shared/widgets/app_scaffold.dart';
-import 'package:memory_ai/shared/widgets/boarding_pass_trip_card.dart';
 import 'package:memory_ai/shared/widgets/error_state.dart';
 
 /// Detailansicht einer Reise.
@@ -25,7 +29,10 @@ class TripDetailScreen extends StatefulWidget {
 
 class _TripDetailScreenState extends State<TripDetailScreen> {
   final _repo = TripRepository();
+  final _mediaRepo = MediaRepository();
   TripModel? _trip;
+  List<TripMemberModel> _members = [];
+  String? _coverImageUrl;
   bool _loading = true;
   String? _error;
 
@@ -43,10 +50,23 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     try {
       final trip = await _repo.getTrip(widget.tripId);
       if (!mounted) return;
+      if (trip == null) {
+        setState(() {
+          _loading = false;
+          _error = 'Reise nicht gefunden.';
+        });
+        return;
+      }
+
+      final members = await _repo.listTripMembers(widget.tripId);
+      final coverUrl = await _resolveCoverUrl(trip);
+
+      if (!mounted) return;
       setState(() {
         _trip = trip;
+        _members = members;
+        _coverImageUrl = coverUrl;
         _loading = false;
-        if (trip == null) _error = 'Reise nicht gefunden.';
       });
     } catch (e) {
       if (!mounted) return;
@@ -57,36 +77,79 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     }
   }
 
+  Future<String?> _resolveCoverUrl(TripModel trip) async {
+    final coverId = trip.coverMediaId;
+    if (coverId == null || coverId.isEmpty) return null;
+    final item = await _mediaRepo.getAccessibleMediaItem(coverId);
+    if (item == null) return null;
+    return SignedUrlService.mediaGridUrl(item);
+  }
+
+  void _openMembers() => context.push('/trips/${widget.tripId}/members');
+
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const AppScaffold(
+        showAppBar: false,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return AppScaffold(
+        title: 'Reise',
+        body: ErrorState(message: _error!, onRetry: _load),
+      );
+    }
+
     final trip = _trip;
-    final role = trip?.myRole;
+    if (trip == null) {
+      return const AppScaffold(showAppBar: false, body: SizedBox.shrink());
+    }
+
+    final role = trip.myRole;
     final canEdit = TripRolePermissions.canEditTrip(role);
     final canUpload = TripRolePermissions.canUploadMedia(role);
+    final canManageMembers = TripRolePermissions.canManageMembers(role);
 
     return AppScaffold(
-      title: trip?.title ?? 'Reise',
-      actions: canEdit
-          ? [
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: () => context.push('/trips/${widget.tripId}/edit'),
+      showAppBar: false,
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.turquoise,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: TripHeroHeader(
+                trip: trip,
+                members: _members,
+                coverImageUrl: _coverImageUrl,
+                onBack: () => context.pop(),
+                onEdit: canEdit
+                    ? () => context.push('/trips/${widget.tripId}/edit')
+                    : null,
               ),
-            ]
-          : null,
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? ErrorState(message: _error!, onRetry: _load)
-          : trip == null
-          ? const SizedBox.shrink()
-          : RefreshIndicator(
-              onRefresh: _load,
-              color: AppColors.accentWarm,
-              child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                children: [
-                  BoardingPassTripCard(trip: trip, enableNavigation: false),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.xxl,
+              ),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  if (canManageMembers)
+                    AddTravelerButton(onTap: _openMembers)
+                  else
+                    _MembersPreviewCard(
+                      onTap: _openMembers,
+                      memberCount: _members
+                          .where((m) => m.invitationStatus == 'accepted')
+                          .length,
+                    ),
                   if (trip.description != null) ...[
                     const SizedBox(height: AppSpacing.lg),
                     Text(
@@ -104,7 +167,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                       _NavChip(
                         icon: Icons.map_outlined,
                         label: 'Karte',
-                        accent: AppColors.accentCool,
+                        accent: AppColors.turquoise,
                         onTap: () => context.push('/trips/${trip.id}/map'),
                       ),
                       _NavChip(
@@ -119,13 +182,12 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                         accent: AppColors.textSecondary,
                         onTap: () => context.push('/trips/${trip.id}/memories'),
                       ),
-                      if (TripRolePermissions.canManageMembers(role))
+                      if (canManageMembers)
                         _NavChip(
                           icon: Icons.group_outlined,
                           label: 'Mitglieder',
                           accent: AppColors.textSecondary,
-                          onTap: () =>
-                              context.push('/trips/${trip.id}/members'),
+                          onTap: _openMembers,
                         ),
                     ],
                   ),
@@ -145,9 +207,51 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                       fontSize: 12,
                     ),
                   ),
-                ],
+                ]),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MembersPreviewCard extends StatelessWidget {
+  const _MembersPreviewCard({required this.onTap, required this.memberCount});
+
+  final VoidCallback onTap;
+  final int memberCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = memberCount == 0
+        ? 'Mitreisende anzeigen'
+        : memberCount == 1
+        ? '1 Mitreisender'
+        : '$memberCount Mitreisende';
+
+    return Material(
+      color: AppColors.cardBackground,
+      borderRadius: BorderRadius.circular(AppRadius.card),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Row(
+            children: [
+              Icon(
+                Icons.groups_outlined,
+                color: AppColors.turquoise.withValues(alpha: 0.9),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(child: Text(label)),
+              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

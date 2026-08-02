@@ -19,7 +19,7 @@ class ChatMessageModel {
       id: json['id'] as String,
       roomId: json['room_id'] as String,
       senderId: json['sender_id'] as String,
-      content: json['content'] as String? ?? '',
+      content: json['body'] as String? ?? json['content'] as String? ?? '',
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,
@@ -30,7 +30,7 @@ class ChatMessageModel {
     'id': id,
     'room_id': roomId,
     'sender_id': senderId,
-    'content': content,
+    'body': content,
     if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
   };
 }

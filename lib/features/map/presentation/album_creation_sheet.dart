@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:memory_ai/app/app_colors.dart';
 import 'package:memory_ai/app/app_spacing.dart';
+import 'package:memory_ai/core/errors/error_mapper.dart';
 import 'package:memory_ai/features/map/data/memory_album_session.dart';
+import 'package:memory_ai/features/memories/data/album_repository.dart';
 import 'package:memory_ai/features/memories/data/media_item_model.dart';
 import 'package:memory_ai/shared/widgets/app_button.dart';
 
@@ -11,17 +13,23 @@ class AlbumCreationSheet extends StatefulWidget {
     required this.items,
     required this.selectedIds,
     required this.locationLabel,
+    this.tripId,
+    this.familyId,
   });
 
   final List<MediaItemModel> items;
   final Set<String> selectedIds;
   final String locationLabel;
+  final String? tripId;
+  final String? familyId;
 
   static Future<MemoryAlbumSession?> show(
     BuildContext context, {
     required List<MediaItemModel> items,
     required Set<String> selectedIds,
     required String locationLabel,
+    String? tripId,
+    String? familyId,
   }) {
     return showModalBottomSheet<MemoryAlbumSession>(
       context: context,
@@ -33,6 +41,8 @@ class AlbumCreationSheet extends StatefulWidget {
           items: items,
           selectedIds: selectedIds,
           locationLabel: locationLabel,
+          tripId: tripId,
+          familyId: familyId,
         ),
       ),
     );
@@ -44,9 +54,11 @@ class AlbumCreationSheet extends StatefulWidget {
 
 class _AlbumCreationSheetState extends State<AlbumCreationSheet> {
   late final TextEditingController _title;
+  final _repo = AlbumRepository();
   String _selection = 'all';
   AlbumLayout _layout = AlbumLayout.mixed;
   String? _coverId;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -73,10 +85,7 @@ class _AlbumCreationSheetState extends State<AlbumCreationSheet> {
         list = list.where((i) => i.mediaType == 'image').toList();
         break;
       case 'photosAndVideoThumbs':
-        // Videos behalten (als Vorschaubilder im Album)
-        break;
       case 'own':
-        // Owner-Filter erfolgt bereits durch Quelle; hier noop
         break;
     }
     list.sort((a, b) {
@@ -85,6 +94,49 @@ class _AlbumCreationSheetState extends State<AlbumCreationSheet> {
       return ad.compareTo(bd);
     });
     return list;
+  }
+
+  Future<void> _saveAndOpen() async {
+    final items = _resolveItems();
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte mindestens ein Medium wählen.')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    try {
+      final title = _title.text.trim().isEmpty
+          ? widget.locationLabel
+          : _title.text.trim();
+      final cover = _coverId ?? items.first.id;
+      final coverItem = items.cast<MediaItemModel?>().firstWhere(
+        (i) => i?.id == cover,
+        orElse: () => items.first,
+      );
+      final album = await _repo.createAlbum(
+        title: title,
+        description: widget.locationLabel,
+        tripId: widget.tripId,
+        familyId: widget.familyId ?? items.first.familyId,
+        coverMediaId: cover,
+        coverPath: coverItem?.thumbnailPath ?? coverItem?.storagePath,
+        layout: AlbumRepository.layoutToDb(_layout),
+        mediaItemIds: items.map((i) => i.id).toList(),
+      );
+      final session = await _repo.toSession(
+        album,
+        locationLabel: widget.locationLabel,
+      );
+      if (!mounted) return;
+      Navigator.pop(context, session);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ErrorMapper.map(e).message)));
+    }
   }
 
   @override
@@ -123,7 +175,9 @@ class _AlbumCreationSheetState extends State<AlbumCreationSheet> {
                   child: Text('Fotos + Video-Vorschaubilder'),
                 ),
               ],
-              onChanged: (v) => setState(() => _selection = v ?? 'all'),
+              onChanged: _saving
+                  ? null
+                  : (v) => setState(() => _selection = v ?? 'all'),
             ),
             DropdownButtonFormField<AlbumLayout>(
               initialValue: _layout,
@@ -146,27 +200,14 @@ class _AlbumCreationSheetState extends State<AlbumCreationSheet> {
                   child: Text('Automatische Mischung'),
                 ),
               ],
-              onChanged: (v) =>
-                  setState(() => _layout = v ?? AlbumLayout.mixed),
+              onChanged: _saving
+                  ? null
+                  : (v) => setState(() => _layout = v ?? AlbumLayout.mixed),
             ),
             const Spacer(),
             AppButton(
-              label: 'Album öffnen',
-              onPressed: () {
-                final items = _resolveItems();
-                Navigator.pop(
-                  context,
-                  MemoryAlbumSession(
-                    title: _title.text.trim().isEmpty
-                        ? widget.locationLabel
-                        : _title.text.trim(),
-                    items: items,
-                    coverMediaId: _coverId,
-                    locationLabel: widget.locationLabel,
-                    layout: _layout,
-                  ),
-                );
-              },
+              label: _saving ? 'Speichern…' : 'Album speichern & öffnen',
+              onPressed: _saving ? null : _saveAndOpen,
             ),
           ],
         ),

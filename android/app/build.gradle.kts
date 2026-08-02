@@ -13,7 +13,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.memory_ai"
+    namespace = "com.johny92013.memoryai"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -23,8 +23,8 @@ android {
     }
 
     defaultConfig {
-        // Platzhalter-ID ok für lokales Sideload-Testen (später für Store ändern).
-        applicationId = "com.example.memory_ai"
+        // Produktiv: analog zur iOS Bundle-ID com.johny92013.memoryai
+        applicationId = "com.johny92013.memoryai"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

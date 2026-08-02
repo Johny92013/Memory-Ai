@@ -6,7 +6,7 @@ import 'package:memory_ai/app/app_spacing.dart';
 import 'package:memory_ai/app/app_typography.dart';
 import 'package:memory_ai/app/theme_extensions.dart';
 
-/// Dunkles Material-3-Theme – Reise & Erinnerungen.
+/// Dunkles Material-3-Theme – Premium Travel Memory.
 class AppTheme {
   AppTheme._();
 
@@ -16,21 +16,21 @@ class AppTheme {
     final textTheme = AppTypography.buildTextTheme();
 
     const colorScheme = ColorScheme.dark(
-      primary: AppColors.accentWarm,
-      onPrimary: AppColors.background,
-      secondary: AppColors.accentCool,
-      onSecondary: AppColors.background,
-      surface: AppColors.surface,
+      primary: AppColors.turquoise,
+      onPrimary: AppColors.white,
+      secondary: AppColors.primaryBlue,
+      onSecondary: AppColors.white,
+      surface: AppColors.cardBackground,
       onSurface: AppColors.textPrimary,
       error: AppColors.error,
-      onError: AppColors.textPrimary,
+      onError: AppColors.white,
     );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.background,
+      scaffoldBackgroundColor: AppColors.backgroundDark,
       textTheme: textTheme,
       extensions: [AppThemeExtension.light],
       appBarTheme: AppBarTheme(
@@ -38,18 +38,18 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: 56,
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundDark,
         foregroundColor: AppColors.textPrimary,
-        titleTextStyle: GoogleFonts.spaceGrotesk(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
         ),
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        color: AppColors.surface,
+        color: AppColors.cardBackground,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
@@ -57,20 +57,20 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         elevation: 0,
         height: 72,
-        backgroundColor: AppColors.backgroundSecondary,
-        indicatorColor: AppColors.accentWarm.withValues(alpha: 0.18),
+        backgroundColor: AppColors.background,
+        indicatorColor: AppColors.turquoise.withValues(alpha: 0.18),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return GoogleFonts.inter(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w500,
-            color: selected ? AppColors.accentWarm : AppColors.textSecondary,
+            color: selected ? AppColors.turquoise : AppColors.textMuted,
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return IconThemeData(
-            color: selected ? AppColors.accentWarm : AppColors.textSecondary,
+            color: selected ? AppColors.turquoise : AppColors.textMuted,
             size: 24,
           );
         }),
@@ -78,8 +78,8 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(buttonHeight),
-          backgroundColor: AppColors.accentWarm,
-          foregroundColor: AppColors.background,
+          backgroundColor: AppColors.turquoise,
+          foregroundColor: AppColors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.card),
           ),
@@ -93,9 +93,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(buttonHeight),
           foregroundColor: AppColors.textPrimary,
-          side: BorderSide(
-            color: AppColors.textSecondary.withValues(alpha: 0.4),
-          ),
+          side: const BorderSide(color: AppColors.divider),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.card),
           ),
@@ -103,7 +101,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.accentCool,
+          foregroundColor: AppColors.cyan,
           minimumSize: const Size(
             AppSpacing.minTouchTarget,
             AppSpacing.minTouchTarget,
@@ -118,14 +116,14 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.backgroundSecondary,
         labelStyle: const TextStyle(color: AppColors.textSecondary),
-        hintStyle: const TextStyle(color: AppColors.textSecondary),
+        hintStyle: const TextStyle(color: AppColors.textMuted),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
-          borderSide: const BorderSide(color: AppColors.accentCool, width: 2),
+          borderSide: const BorderSide(color: AppColors.turquoise, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
@@ -141,33 +139,94 @@ class AppTheme {
         ),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surface,
-        selectedColor: AppColors.accentWarm.withValues(alpha: 0.2),
+        backgroundColor: AppColors.cardElevated,
+        selectedColor: AppColors.turquoise.withValues(alpha: 0.22),
         labelStyle: GoogleFonts.inter(fontSize: 13),
-        side: BorderSide(
-          color: AppColors.textSecondary.withValues(alpha: 0.25),
-        ),
+        side: const BorderSide(color: AppColors.divider),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.chip),
         ),
       ),
-      dividerTheme: DividerThemeData(
-        color: AppColors.textSecondary.withValues(alpha: 0.2),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.divider,
         thickness: 1,
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.accentWarm,
+        color: AppColors.turquoise,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.cardElevated,
         contentTextStyle: GoogleFonts.inter(color: AppColors.textPrimary),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         behavior: SnackBarBehavior.floating,
       ),
-      focusColor: AppColors.accentCool.withValues(alpha: 0.35),
-      hoverColor: AppColors.accentWarm.withValues(alpha: 0.08),
+      focusColor: AppColors.turquoise.withValues(alpha: 0.35),
+      hoverColor: AppColors.turquoise.withValues(alpha: 0.08),
+    );
+  }
+
+  /// Heller Modus – abgestimmt auf Travel-Palette (nicht nur invertiert).
+  static ThemeData get light {
+    final textTheme = AppTypography.buildTextTheme().apply(
+      bodyColor: AppColors.lightText,
+      displayColor: AppColors.lightText,
+    );
+    const colorScheme = ColorScheme.light(
+      primary: AppColors.turquoise,
+      onPrimary: AppColors.white,
+      secondary: AppColors.primaryBlue,
+      onSecondary: AppColors.white,
+      surface: AppColors.lightCard,
+      onSurface: AppColors.lightText,
+      error: AppColors.error,
+      onError: AppColors.white,
+    );
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: AppColors.lightBackground,
+      colorScheme: colorScheme,
+      textTheme: textTheme,
+      extensions: [AppThemeExtension.light],
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: AppColors.lightBackground,
+        foregroundColor: AppColors.lightText,
+        titleTextStyle: GoogleFonts.inter(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          color: AppColors.lightText,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.lightCard,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          side: BorderSide(color: AppColors.divider.withValues(alpha: 0.35)),
+        ),
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: AppColors.turquoise,
+        textColor: AppColors.lightText,
+      ),
+      dividerColor: AppColors.divider.withValues(alpha: 0.4),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size.fromHeight(buttonHeight),
+          backgroundColor: AppColors.turquoise,
+          foregroundColor: AppColors.white,
+        ),
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:memory_ai/app/app.dart';
 import 'package:memory_ai/app/app_colors.dart';
 import 'package:memory_ai/core/config/supabase_config.dart';
+import 'package:memory_ai/core/services/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,6 +11,7 @@ Future<void> main() async {
   try {
     await dotenv.load(fileName: '.env');
     await SupabaseConfig.initialize();
+    await ThemeController.instance.load();
     runApp(const FamilyMemoriesApp());
   } catch (error, stackTrace) {
     FlutterError.dumpErrorToConsole(

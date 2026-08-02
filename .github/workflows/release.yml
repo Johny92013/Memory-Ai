@@ -16,7 +16,7 @@ permissions:
 env:
   FLUTTER_VERSION: "3.44.1"
   APP_BUILD_NAME: "1.0.0"
-  APP_BUILD_NUMBER: "1"
+  APP_BUILD_NUMBER: "2"
 
 jobs:
   build_ios_unsigned:
@@ -122,10 +122,10 @@ jobs:
           cp -R build/ios/iphoneos/Runner.app build/ios/sideload/Payload/
           (
             cd build/ios/sideload
-            zip -r Memory-AI-1.0.0-unsigned.ipa Payload
+            zip -r Memory-AI-1.0.0+2-unsigned.ipa Payload
           )
 
-          IPA="build/ios/sideload/Memory-AI-1.0.0-unsigned.ipa"
+          IPA="build/ios/sideload/Memory-AI-1.0.0+2-unsigned.ipa"
           if [ ! -f "$IPA" ]; then
             echo "::error::Unsigned IPA missing: $IPA"
             exit 1
@@ -145,8 +145,8 @@ jobs:
       - name: Upload unsigned IPA artifact
         uses: actions/upload-artifact@v5
         with:
-          name: memory-ai-1.0.0-unsigned-ipa-sideloadly
-          path: build/ios/sideload/Memory-AI-1.0.0-unsigned.ipa
+          name: memory-ai-1.0.0+2-unsigned-ipa-sideloadly
+          path: build/ios/sideload/Memory-AI-1.0.0+2-unsigned.ipa
           if-no-files-found: error
           retention-days: 14
 

@@ -70,6 +70,7 @@ class _MediaPeopleEditorState extends State<MediaPeopleEditor> {
         await _repo.assignPersonToMedia(
           mediaId: widget.mediaId,
           personId: person.id,
+          taggedProfileId: person.linkedProfileId,
         );
       }
       if (widget.otherMediaIds.isNotEmpty) {
@@ -97,6 +98,9 @@ class _MediaPeopleEditorState extends State<MediaPeopleEditor> {
           await _repo.assignPeopleToManyMedia(
             mediaIds: widget.otherMediaIds,
             personIds: picked.map((p) => p.id).toList(),
+            profileIdsByPersonId: {
+              for (final p in picked) p.id: p.linkedProfileId,
+            },
           );
         }
       }

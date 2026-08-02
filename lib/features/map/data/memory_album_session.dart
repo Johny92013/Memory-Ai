@@ -1,6 +1,6 @@
 import 'package:memory_ai/features/memories/data/media_item_model.dart';
 
-/// In-App-Album (Session, keine serverseitige Dateikopie).
+/// Persistiertes oder Session-Album für den Viewer.
 class MemoryAlbumSession {
   const MemoryAlbumSession({
     required this.title,
@@ -9,6 +9,7 @@ class MemoryAlbumSession {
     this.locationLabel,
     this.layout = AlbumLayout.single,
     this.captionsEnabled = true,
+    this.albumId,
   });
 
   final String title;
@@ -17,6 +18,9 @@ class MemoryAlbumSession {
   final String? locationLabel;
   final AlbumLayout layout;
   final bool captionsEnabled;
+
+  /// Wenn gesetzt: Album ist in der DB persistiert.
+  final String? albumId;
 
   MediaItemModel? get cover {
     if (coverMediaId == null) return items.isEmpty ? null : items.first;

@@ -110,8 +110,9 @@ class _PersonPickerState extends State<PersonPicker> {
 
   Future<void> _pickSelf() async {
     try {
+      final uid = SupabaseService.client.auth.currentUser?.id;
       final person = await _peopleRepo.findOrCreateSelf(displayName: _selfName);
-      _select(person);
+      _select(person.copyWith(linkedProfileId: uid));
     } catch (e) {
       _snack(ErrorMapper.map(e).message);
     }
@@ -122,7 +123,7 @@ class _PersonPickerState extends State<PersonPicker> {
       final person = await _peopleRepo.findOrCreateNamedPerson(
         member.displayName,
       );
-      _select(person);
+      _select(person.copyWith(linkedProfileId: member.userId));
     } catch (e) {
       _snack(ErrorMapper.map(e).message);
     }

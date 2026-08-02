@@ -21,7 +21,7 @@ Datum: 2026-07-31
 
 | Plattform | Aktueller Wert | Vorschlag produktiv |
 |---|---|---|
-| Android `applicationId` | `com.example.memory_ai` | z. B. `app.memoryai.family` |
+| Android `applicationId` | `com.johny92013.memoryai` | — |
 | iOS Bundle ID | `com.johny92013.memoryai` | — |
 
 Platzhalter belassen (laut Auftrag nicht automatisch ändern). Vor Store-Release vereinheitlichen.

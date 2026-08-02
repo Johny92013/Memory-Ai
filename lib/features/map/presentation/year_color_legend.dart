@@ -20,12 +20,16 @@ class _YearColorLegendState extends State<YearColorLegend> {
   Widget build(BuildContext context) {
     if (widget.years.isEmpty) return const SizedBox.shrink();
     return Material(
-      color: AppColors.surface.withValues(alpha: 0.92),
+      color: AppColors.cardBackground.withValues(alpha: 0.9),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: () => setState(() => _expanded = !_expanded),
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.divider.withValues(alpha: 0.6)),
+          ),
           padding: const EdgeInsets.all(AppSpacing.sm),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,10 +38,16 @@ class _YearColorLegendState extends State<YearColorLegend> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Jahre', style: Theme.of(context).textTheme.labelMedium),
+                  Text(
+                    'Jahre',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                   Icon(
                     _expanded ? Icons.expand_less : Icons.expand_more,
                     size: 18,
+                    color: AppColors.textSecondary,
                   ),
                 ],
               ),
@@ -58,7 +68,13 @@ class _YearColorLegendState extends State<YearColorLegend> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Text('$y'),
+                        Text(
+                          '$y',
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   );

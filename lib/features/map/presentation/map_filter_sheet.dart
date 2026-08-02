@@ -37,13 +37,26 @@ class MapFilterSheet extends StatefulWidget {
     return showModalBottomSheet<MapFilterState>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      builder: (ctx) => SizedBox(
-        height: MediaQuery.sizeOf(ctx).height * 0.85,
-        child: MapFilterSheet(
-          initial: initial,
-          availableYears: availableYears,
-          people: people,
+      backgroundColor: AppColors.cardBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Theme(
+        data: Theme.of(ctx).copyWith(
+          chipTheme: Theme.of(ctx).chipTheme.copyWith(
+            selectedColor: AppColors.turquoise.withValues(alpha: 0.25),
+            checkmarkColor: AppColors.turquoise,
+            side: BorderSide(color: AppColors.divider.withValues(alpha: 0.6)),
+            labelStyle: const TextStyle(color: AppColors.textPrimary),
+          ),
+        ),
+        child: SizedBox(
+          height: MediaQuery.sizeOf(ctx).height * 0.85,
+          child: MapFilterSheet(
+            initial: initial,
+            availableYears: availableYears,
+            people: people,
+          ),
         ),
       ),
     );

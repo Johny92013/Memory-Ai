@@ -2,6 +2,8 @@ import 'package:memory_ai/core/errors/app_exception.dart';
 import 'package:memory_ai/core/errors/error_mapper.dart';
 import 'package:memory_ai/core/services/supabase_service.dart';
 import 'package:memory_ai/features/memories/data/person_model.dart';
+import 'package:memory_ai/features/people/data/tagged_media_models.dart';
+import 'package:memory_ai/features/people/data/tagged_media_repository.dart';
 
 /// Personen und Zuordnung zu Medien (`people` / `media_people`).
 class PeopleRepository {
@@ -81,19 +83,52 @@ class PeopleRepository {
     return createPerson(trimmed);
   }
 
+  /// Ordnet eine Person einem Medium zu.
+  ///
+  /// Wenn [taggedProfileId] gesetzt ist und nicht der aktuelle Nutzer, wird
+  /// `pending_confirmation` gesetzt und eine In-App-Benachrichtigung erzeugt.
+  /// Es wird keine Storage-Datei kopiert.
   Future<void> assignPersonToMedia({
     required String mediaId,
     required String personId,
     String source = 'manual',
     String status = 'confirmed',
+    String? taggedProfileId,
+    bool notifyTaggedUser = true,
   }) async {
     try {
+      final me = _userId;
+      final tagged = taggedProfileId != null && taggedProfileId.isNotEmpty
+          ? taggedProfileId
+          : null;
+      final needsConfirmation = tagged != null && tagged != me;
+      final resolvedStatus = needsConfirmation
+          ? MediaPersonStatus.pendingConfirmation
+          : status;
+      final resolvedSource = needsConfirmation && source == 'manual'
+          ? 'family_tag'
+          : source;
+
       await _client.from('media_people').upsert({
         'media_item_id': mediaId,
         'person_id': personId,
-        'source': source,
-        'status': status,
+        'source': resolvedSource,
+        'status': resolvedStatus,
+        'tagged_profile_id': tagged,
+        'tagged_by': me,
+        if (needsConfirmation) 'confirmed_at': null,
+        if (needsConfirmation) 'rejected_at': null,
+        if (needsConfirmation) 'added_to_gallery_at': null,
       }, onConflict: 'media_item_id,person_id');
+
+      if (needsConfirmation && notifyTaggedUser) {
+        await InAppNotificationRepository().notifyPersonTagged(
+          taggedProfileId: tagged,
+          title: 'Neue Markierung',
+          body: 'Du wurdest auf einer Erinnerung markiert.',
+          payload: {'media_id': mediaId, 'route': '/profile/tagged-media'},
+        );
+      }
     } catch (error) {
       throw ErrorMapper.map(error);
     }
@@ -163,6 +198,7 @@ class PeopleRepository {
     required List<String> mediaIds,
     required List<String> personIds,
     String source = 'manual',
+    Map<String, String?> profileIdsByPersonId = const {},
   }) async {
     for (final mediaId in mediaIds) {
       for (final personId in personIds) {
@@ -170,6 +206,7 @@ class PeopleRepository {
           mediaId: mediaId,
           personId: personId,
           source: source,
+          taggedProfileId: profileIdsByPersonId[personId],
         );
       }
     }

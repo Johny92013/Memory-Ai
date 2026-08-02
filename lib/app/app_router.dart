@@ -12,6 +12,7 @@ import 'package:memory_ai/features/auth/presentation/login_screen.dart';
 import 'package:memory_ai/features/auth/presentation/register_screen.dart';
 import 'package:memory_ai/features/auth/presentation/welcome_screen.dart';
 import 'package:memory_ai/features/chat/presentation/chat_overview_screen.dart';
+import 'package:memory_ai/features/chat/presentation/chat_room_screen.dart';
 import 'package:memory_ai/features/profile/presentation/profile_groups_screen.dart';
 import 'package:memory_ai/features/map/presentation/world_map_screen.dart';
 import 'package:memory_ai/features/timeline/presentation/timeline_screen.dart';
@@ -37,6 +38,9 @@ import 'package:memory_ai/features/family_tree/presentation/edit_family_tree_per
 import 'package:memory_ai/features/family_tree/presentation/family_tree_person_detail_screen.dart';
 import 'package:memory_ai/features/family_tree/presentation/family_tree_screen.dart';
 import 'package:memory_ai/features/home/presentation/main_navigation_screen.dart';
+import 'package:memory_ai/features/home/presentation/scaffold_with_bottom_nav.dart';
+import 'package:memory_ai/features/people/presentation/tagged_media_detail_screen.dart';
+import 'package:memory_ai/features/people/presentation/tagged_media_inbox_screen.dart';
 import 'package:memory_ai/features/memories/data/media_item_model.dart';
 import 'package:memory_ai/features/memories/presentation/assign_location_screen.dart';
 import 'package:memory_ai/features/memories/presentation/album_detail_screen.dart';
@@ -143,104 +147,178 @@ final GoRouter appRouter = GoRouter(
       path: '/complete-profile',
       builder: (_, _) => const CompleteProfileScreen(),
     ),
-    GoRoute(path: '/home', builder: (_, _) => const MainNavigationScreen()),
-    GoRoute(path: '/trips', builder: (_, _) => const TripsScreen()),
+    GoRoute(
+      path: '/home',
+      builder: (context, state) {
+        final tab = int.tryParse(state.uri.queryParameters['tab'] ?? '0') ?? 0;
+        return MainNavigationScreen(initialIndex: tab.clamp(0, 3));
+      },
+    ),
+    GoRoute(
+      path: '/trips',
+      builder: (_, _) => const ScaffoldWithBottomNav(child: TripsScreen()),
+    ),
     GoRoute(
       path: '/trips/suggestions',
-      builder: (_, _) => const TripSuggestionsScreen(),
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: TripSuggestionsScreen()),
     ),
-    GoRoute(path: '/trips/create', builder: (_, _) => const CreateTripScreen()),
+    GoRoute(
+      path: '/trips/create',
+      builder: (_, _) => const ScaffoldWithBottomNav(child: CreateTripScreen()),
+    ),
     GoRoute(
       path: '/trips/:id',
-      builder: (context, state) =>
-          TripDetailScreen(tripId: state.pathParameters['id']!),
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: TripDetailScreen(tripId: state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       path: '/trips/:id/edit',
-      builder: (context, state) =>
-          EditTripScreen(tripId: state.pathParameters['id']!),
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: EditTripScreen(tripId: state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       path: '/trips/:id/timeline',
-      builder: (context, state) =>
-          TripTimelineScreen(tripId: state.pathParameters['id']!),
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: TripTimelineScreen(tripId: state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       path: '/trips/:id/map',
-      builder: (context, state) =>
-          TripMapScreen(tripId: state.pathParameters['id']!),
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: TripMapScreen(tripId: state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       path: '/trips/:id/members',
-      builder: (context, state) =>
-          TripMembersScreen(tripId: state.pathParameters['id']!),
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: TripMembersScreen(tripId: state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       path: '/trips/:id/memories',
-      builder: (context, state) =>
-          TripMemoriesScreen(tripId: state.pathParameters['id']!),
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: TripMemoriesScreen(tripId: state.pathParameters['id']!),
+      ),
     ),
-    GoRoute(path: '/timeline', builder: (_, _) => const TimelineScreen()),
+    GoRoute(
+      path: '/timeline',
+      builder: (_, _) => const ScaffoldWithBottomNav(child: TimelineScreen()),
+    ),
     GoRoute(
       path: '/map',
-      builder: (_, _) => const Scaffold(body: WorldMapScreen()),
+      builder: (_, _) => const ScaffoldWithBottomNav(
+        selectedIndex: 2,
+        child: WorldMapScreen(),
+      ),
     ),
-    GoRoute(path: '/profile', builder: (_, _) => const ProfileScreen()),
+    GoRoute(
+      path: '/profile',
+      builder: (_, _) => const ScaffoldWithBottomNav(child: ProfileScreen()),
+    ),
     GoRoute(
       path: '/profile/edit',
-      builder: (_, _) => const EditProfileScreen(),
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: EditProfileScreen()),
     ),
     GoRoute(
       path: '/profile/groups',
-      builder: (_, _) => const ProfileGroupsScreen(),
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: ProfileGroupsScreen()),
+    ),
+    GoRoute(
+      path: '/profile/tagged-media',
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: TaggedMediaInboxScreen()),
+    ),
+    GoRoute(
+      path: '/profile/tagged-media/:tagId',
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: TaggedMediaDetailScreen(tagId: state.pathParameters['tagId']!),
+      ),
     ),
     GoRoute(
       path: '/profile/consent/face',
-      builder: (_, _) => const ConsentInfoScreen(),
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: ConsentInfoScreen()),
     ),
     GoRoute(
       path: '/profile/face-references',
-      builder: (_, _) => const FaceReferenceSetupScreen(),
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: FaceReferenceSetupScreen()),
     ),
-    GoRoute(path: '/chat', builder: (_, _) => const ChatOverviewScreen()),
-    GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+    GoRoute(
+      path: '/chat',
+      builder: (_, _) => const ScaffoldWithBottomNav(
+        selectedIndex: 0,
+        child: ChatOverviewScreen(),
+      ),
+    ),
+    GoRoute(
+      path: '/chat/:roomId',
+      builder: (context, state) => ScaffoldWithBottomNav(
+        selectedIndex: 0,
+        child: ChatRoomScreen(roomId: state.pathParameters['roomId']!),
+      ),
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (_, _) => const ScaffoldWithBottomNav(child: SettingsScreen()),
+    ),
     GoRoute(
       path: '/settings/privacy',
-      builder: (_, _) => const PrivacyScreen(),
+      builder: (_, _) => const ScaffoldWithBottomNav(child: PrivacyScreen()),
     ),
     GoRoute(
       path: '/settings/account',
-      builder: (_, _) => const AccountScreen(),
+      builder: (_, _) => const ScaffoldWithBottomNav(child: AccountScreen()),
     ),
-    GoRoute(path: '/family', builder: (_, _) => const FamilyOverviewScreen()),
+    GoRoute(
+      path: '/family',
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: FamilyOverviewScreen()),
+    ),
     GoRoute(
       path: '/family/setup',
-      builder: (_, _) => const FamilySetupScreen(),
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: FamilySetupScreen()),
     ),
     GoRoute(
       path: '/family/create',
-      builder: (_, _) => const CreateFamilyScreen(),
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: CreateFamilyScreen()),
     ),
-    GoRoute(path: '/family/join', builder: (_, _) => const JoinFamilyScreen()),
+    GoRoute(
+      path: '/family/join',
+      builder: (_, _) => const ScaffoldWithBottomNav(child: JoinFamilyScreen()),
+    ),
     GoRoute(
       path: '/family/members',
       builder: (context, state) {
         final familyId = state.uri.queryParameters['familyId'] ?? '';
-        return FamilyMembersScreen(familyId: familyId);
+        return ScaffoldWithBottomNav(
+          child: FamilyMembersScreen(familyId: familyId),
+        );
       },
     ),
     GoRoute(
       path: '/family/member/:id',
-      builder: (context, state) => FamilyMemberDetailScreen(
-        familyId: state.uri.queryParameters['familyId'] ?? '',
-        userId: state.pathParameters['id']!,
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: FamilyMemberDetailScreen(
+          familyId: state.uri.queryParameters['familyId'] ?? '',
+          userId: state.pathParameters['id']!,
+        ),
       ),
     ),
     GoRoute(
       path: '/family/invite',
       builder: (context, state) {
         final familyId = state.uri.queryParameters['familyId'] ?? '';
-        return InviteFamilyMemberScreen(familyId: familyId);
+        return ScaffoldWithBottomNav(
+          child: InviteFamilyMemberScreen(familyId: familyId),
+        );
       },
     ),
     GoRoute(
@@ -248,42 +326,54 @@ final GoRouter appRouter = GoRouter(
       name: 'familyInvite',
       builder: (context, state) {
         final familyId = state.pathParameters['familyId'] ?? '';
-        return InviteFamilyMemberScreen(familyId: familyId);
+        return ScaffoldWithBottomNav(
+          child: InviteFamilyMemberScreen(familyId: familyId),
+        );
       },
     ),
     GoRoute(
       path: '/family-tree',
       builder: (context, state) {
         final familyId = state.uri.queryParameters['familyId'] ?? '';
-        return FamilyTreeScreen(familyId: familyId);
+        return ScaffoldWithBottomNav(
+          child: FamilyTreeScreen(familyId: familyId),
+        );
       },
     ),
     GoRoute(
       path: '/family-tree/person/add',
       builder: (context, state) {
         final familyId = state.uri.queryParameters['familyId'] ?? '';
-        return AddFamilyTreePersonScreen(familyId: familyId);
+        return ScaffoldWithBottomNav(
+          child: AddFamilyTreePersonScreen(familyId: familyId),
+        );
       },
     ),
     GoRoute(
       path: '/family-tree/person/:id',
-      builder: (context, state) => FamilyTreePersonDetailScreen(
-        personId: state.pathParameters['id']!,
-        familyId: state.uri.queryParameters['familyId'] ?? '',
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: FamilyTreePersonDetailScreen(
+          personId: state.pathParameters['id']!,
+          familyId: state.uri.queryParameters['familyId'] ?? '',
+        ),
       ),
     ),
     GoRoute(
       path: '/family-tree/person/:id/edit',
-      builder: (context, state) => EditFamilyTreePersonScreen(
-        personId: state.pathParameters['id']!,
-        familyId: state.uri.queryParameters['familyId'] ?? '',
+      builder: (context, state) => ScaffoldWithBottomNav(
+        child: EditFamilyTreePersonScreen(
+          personId: state.pathParameters['id']!,
+          familyId: state.uri.queryParameters['familyId'] ?? '',
+        ),
       ),
     ),
     GoRoute(
       path: '/family-tree/relationship/add',
       builder: (context, state) {
         final familyId = state.uri.queryParameters['familyId'] ?? '';
-        return AssignRelationshipScreen(familyId: familyId);
+        return ScaffoldWithBottomNav(
+          child: AssignRelationshipScreen(familyId: familyId),
+        );
       },
     ),
     GoRoute(
@@ -291,12 +381,18 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final familyId = state.uri.queryParameters['familyId'];
         final tripId = state.uri.queryParameters['tripId'];
-        return UploadPhotosScreen(familyId: familyId, tripId: tripId);
+        return ScaffoldWithBottomNav(
+          selectedIndex: 1,
+          child: UploadPhotosScreen(familyId: familyId, tripId: tripId),
+        );
       },
     ),
     GoRoute(
       path: '/media/gallery',
-      builder: (_, _) => const MediaGalleryScreen(),
+      builder: (_, _) => const ScaffoldWithBottomNav(
+        selectedIndex: 1,
+        child: MediaGalleryScreen(),
+      ),
     ),
     GoRoute(
       path: '/album/:id',
@@ -308,35 +404,46 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final extra = state.extra;
         if (extra is! MediaItemModel) {
-          return const Scaffold(
-            body: Center(child: Text('Kein Foto ausgewählt.')),
+          return const ScaffoldWithBottomNav(
+            child: Scaffold(body: Center(child: Text('Kein Foto ausgewählt.'))),
           );
         }
-        return AssignLocationScreen(mediaItem: extra);
+        return ScaffoldWithBottomNav(
+          selectedIndex: 1,
+          child: AssignLocationScreen(mediaItem: extra),
+        );
       },
     ),
     GoRoute(
       path: '/media/:id',
-      builder: (context, state) =>
-          MediaDetailScreen(mediaId: state.pathParameters['id']!),
+      builder: (context, state) => ScaffoldWithBottomNav(
+        selectedIndex: 1,
+        child: MediaDetailScreen(mediaId: state.pathParameters['id']!),
+      ),
     ),
     GoRoute(
       path: '/map/location',
-      builder: (context, state) => LocationMemoriesScreen(
-        locationId: state.uri.queryParameters['id'],
-        countryName: state.uri.queryParameters['country'],
-        cityName: state.uri.queryParameters['city'],
-        coordinateKey: state.uri.queryParameters['coordinateKey'],
-        locationLabel: state.uri.queryParameters['label'],
+      builder: (context, state) => ScaffoldWithBottomNav(
+        selectedIndex: 2,
+        child: LocationMemoriesScreen(
+          locationId: state.uri.queryParameters['id'],
+          countryName: state.uri.queryParameters['country'],
+          cityName: state.uri.queryParameters['city'],
+          coordinateKey: state.uri.queryParameters['coordinateKey'],
+          locationLabel: state.uri.queryParameters['label'],
+        ),
       ),
     ),
     GoRoute(
       path: '/map/location-gallery',
-      builder: (context, state) => LocationGalleryScreen(
-        coordinateKey: state.uri.queryParameters['coordinateKey'],
-        countryName: state.uri.queryParameters['country'],
-        cityName: state.uri.queryParameters['city'],
-        locationLabel: state.uri.queryParameters['label'],
+      builder: (context, state) => ScaffoldWithBottomNav(
+        selectedIndex: 2,
+        child: LocationGalleryScreen(
+          coordinateKey: state.uri.queryParameters['coordinateKey'],
+          countryName: state.uri.queryParameters['country'],
+          cityName: state.uri.queryParameters['city'],
+          locationLabel: state.uri.queryParameters['label'],
+        ),
       ),
     ),
     GoRoute(
@@ -365,15 +472,26 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/map/country',
-      builder: (context, state) => CountryDetailScreen(
-        countryName: state.uri.queryParameters['name'] ?? '',
+      builder: (context, state) => ScaffoldWithBottomNav(
+        selectedIndex: 2,
+        child: CountryDetailScreen(
+          countryName: state.uri.queryParameters['name'] ?? '',
+        ),
       ),
     ),
-    GoRoute(path: '/admin', builder: (_, _) => const AdminDashboardScreen()),
-    GoRoute(path: '/admin/users', builder: (_, _) => const AdminUsersScreen()),
+    GoRoute(
+      path: '/admin',
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: AdminDashboardScreen()),
+    ),
+    GoRoute(
+      path: '/admin/users',
+      builder: (_, _) => const ScaffoldWithBottomNav(child: AdminUsersScreen()),
+    ),
     GoRoute(
       path: '/admin/families',
-      builder: (_, _) => const AdminFamiliesScreen(),
+      builder: (_, _) =>
+          const ScaffoldWithBottomNav(child: AdminFamiliesScreen()),
     ),
   ],
 );

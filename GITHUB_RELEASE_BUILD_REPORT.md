@@ -9,7 +9,7 @@ Stand der Einrichtung (lokal unter Windows). **Keine CI-Artefakte wurden in dies
 | Flutter | 3.44.1 stable |
 | Dart | 3.12.1 |
 | `pubspec.yaml` version | `1.0.0+1` |
-| Android applicationId | `com.example.memory_ai` (**Platzhalter**) |
+| Android applicationId | `com.johny92013.memoryai` |
 | iOS Bundle ID | `com.johny92013.memoryai` |
 | Flavors | keine |
 | FVM | nicht verwendet |
@@ -42,7 +42,7 @@ Stand der Einrichtung (lokal unter Windows). **Keine CI-Artefakte wurden in dies
     `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`,  
     `IOS_CERTIFICATE_BASE64`, `IOS_CERTIFICATE_PASSWORD`, `IOS_PROVISIONING_PROFILE_BASE64`, `IOS_KEYCHAIN_PASSWORD`, `IOS_TEAM_ID`, `IOS_BUNDLE_ID`  
 14. **Bundle Identifier:** `com.johny92013.memoryai`  
-15. **Android applicationId:** `com.example.memory_ai`  
+15. **Android applicationId:** `com.johny92013.memoryai`  
 16. **Bekannte Fehler:** `video_thumbnail` braucht Pub-Cache-Patch (im Workflow enthalten)  
 17. **Bekannte Blocker:** kein GitHub-Remote; Platzhalter-Bundle-IDs; Apple/Android Signing-Secrets fehlen  
 18. **Workflow gestartet?** Nein  

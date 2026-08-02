@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:memory_ai/app/app_colors.dart';
 
-/// Farben für das Home-Dashboard (helles Layout unter dunklem Header).
+/// Dashboard-Farben – an Travel-Dark-Theme angeglichen.
 abstract final class HomeDashboardColors {
-  static const header = Color(0xFF07182A);
-  static const pageBackground = Color(0xFFF7F8FA);
-  static const primaryText = Color(0xFF172033);
-  static const secondaryText = Color(0xFF727B8C);
-  static const white = Color(0xFFFFFFFF);
+  static const header = AppColors.background;
+  static const pageBackground = AppColors.backgroundDark;
+  static const primaryText = AppColors.textPrimary;
+  static const secondaryText = AppColors.textSecondary;
+  static const white = AppColors.white;
 
-  static const blue = Color(0xFF5C86FF);
-  static const blueSoft = Color(0xFFEEF3FF);
-  static const green = Color(0xFF79C98A);
-  static const greenSoft = Color(0xFFEFF9F1);
-  static const violet = Color(0xFF8E7CFF);
-  static const violetSoft = Color(0xFFF2EFFF);
-  static const coral = Color(0xFFF27A66);
-  static const coralSoft = Color(0xFFFFF0EC);
-  static const navActive = Color(0xFFEF6B5E);
-  static const navInactive = Color(0xFF727B8C);
-  static const plusButton = Color(0xFF0A2138);
-  static const link = Color(0xFF5C86FF);
+  static const blue = AppColors.primaryBlue;
+  static const blueSoft = Color(0xFF1A3350);
+  static const green = AppColors.turquoise;
+  static const greenSoft = Color(0xFF143A3A);
+  static const violet = Color(0xFF8B5CF6);
+  static const violetSoft = Color(0xFF2A1F4D);
+  static const coral = AppColors.accentOrange;
+  static const coralSoft = Color(0xFF3A2A14);
+  static const navActive = AppColors.turquoise;
+  static const navInactive = AppColors.textMuted;
+  static const plusButton = AppColors.turquoise;
+  static const link = AppColors.cyan;
 
-  static const cardShadow = Color(0x1A000000);
+  static const cardShadow = Color(0x40000000);
 }

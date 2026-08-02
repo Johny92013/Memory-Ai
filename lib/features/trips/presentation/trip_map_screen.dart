@@ -73,7 +73,7 @@ class _TripMapScreenState extends State<TripMapScreen> {
                   urlTemplate:
                       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                   subdomains: const ['a', 'b', 'c'],
-                  userAgentPackageName: 'memory_ai',
+                  userAgentPackageName: 'com.johny92013.memoryai',
                 ),
                 MarkerLayer(
                   markers: groups

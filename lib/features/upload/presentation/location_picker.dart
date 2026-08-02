@@ -225,7 +225,7 @@ class _LocationPickerState extends State<LocationPicker> {
                     TileLayer(
                       urlTemplate:
                           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'app.memoryai.family',
+                      userAgentPackageName: 'com.johny92013.memoryai',
                     ),
                     MarkerLayer(
                       markers: [

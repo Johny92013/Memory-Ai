@@ -1,0 +1,15 @@
+-- DRAFT ONLY – NICHT AUSFÜHREN.
+-- Spätere Video-/KI-Pipeline (Phase 8 Vorbereitung).
+
+-- create table if not exists public.video_jobs (
+--   id uuid primary key default gen_random_uuid(),
+--   owner_id uuid not null references auth.users (id) on delete cascade,
+--   source_album_id uuid references public.albums (id) on delete set null,
+--   trip_id uuid references public.trips (id) on delete set null,
+--   status text not null default 'queued'
+--     check (status in ('queued', 'processing', 'done', 'failed')),
+--   output_storage_path text,
+--   error_message text,
+--   created_at timestamptz not null default now(),
+--   updated_at timestamptz not null default now()
+-- );

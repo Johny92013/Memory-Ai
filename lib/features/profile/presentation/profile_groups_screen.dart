@@ -3,14 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:memory_ai/app/app_colors.dart';
 import 'package:memory_ai/shared/widgets/app_scaffold.dart';
 
-/// Hub für Familie, Gruppen und Nachrichten (aus Profil).
+/// Hub für Verbindungen, Familie und Nachrichten (aus Profil).
 class ProfileGroupsScreen extends StatelessWidget {
   const ProfileGroupsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Gruppen & Mitglieder',
+      title: 'Verbindungen und Familie',
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -32,8 +32,8 @@ class ProfileGroupsScreen extends StatelessWidget {
             ),
             tileColor: AppColors.card,
             leading: const Icon(Icons.chat_bubble_outline),
-            title: const Text('Nachrichten'),
-            subtitle: const Text('Familien-Chat und Gruppenunterhaltungen'),
+            title: const Text('Familienchat'),
+            subtitle: const Text('Textnachrichten in Echtzeit'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/chat'),
           ),

@@ -6,6 +6,7 @@ import 'package:memory_ai/features/memories/data/media_face_detection_repository
 import 'package:memory_ai/features/memories/data/people_repository.dart';
 import 'package:memory_ai/features/people/data/face_embedding_engine.dart';
 import 'package:memory_ai/features/people/data/face_reference_repository.dart';
+import 'package:memory_ai/features/people/data/mobile_facenet_embedding_engine.dart';
 import 'package:memory_ai/features/profile/data/biometric_consent_repository.dart';
 import 'package:memory_ai/features/profile/data/profile_model.dart';
 import 'package:memory_ai/core/services/supabase_service.dart';
@@ -23,7 +24,7 @@ class FaceMatchingService {
            faceReferenceConsentCheck ?? hasFaceReferenceConsent,
        _familyMatchingConsentCheck =
            familyMatchingConsentCheck ?? hasFamilyMatchingConsent,
-       _engine = engine ?? LocalProjectionEmbeddingEngine(),
+       _engine = engine ?? createFaceEmbeddingEngine(),
        _referenceRepo = referenceRepo ?? FaceReferenceRepository(),
        _peopleRepo = peopleRepo ?? PeopleRepository(),
        _detectionRepo = detectionRepo ?? MediaFaceDetectionRepository();

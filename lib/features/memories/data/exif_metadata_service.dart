@@ -8,7 +8,9 @@ class PhotoExifMetadata {
   const PhotoExifMetadata({
     this.dateTimeOriginal,
     this.dateTimeDigitized,
+    this.createDateTag,
     this.imageDateTime,
+    this.dateModifiedTag,
     this.fileLastModified,
     this.latitude,
     this.longitude,
@@ -23,7 +25,13 @@ class PhotoExifMetadata {
 
   final DateTime? dateTimeOriginal;
   final DateTime? dateTimeDigitized;
+
+  /// EXIF CreateDate / Media CreateDate (falls vorhanden).
+  final DateTime? createDateTag;
   final DateTime? imageDateTime;
+
+  /// EXIF DateModified / ModifyDate.
+  final DateTime? dateModifiedTag;
   final DateTime? fileLastModified;
   final double? latitude;
   final double? longitude;
@@ -35,20 +43,25 @@ class PhotoExifMetadata {
   final int? imageHeight;
   final Map<String, dynamic> rawExifJson;
 
-  /// Alias für ältere Aufrufer (DateTimeDigitized).
-  DateTime? get createDate => dateTimeDigitized ?? imageDateTime;
+  /// Alias für ältere Aufrufer (DateTimeDigitized / CreateDate).
+  DateTime? get createDate =>
+      createDateTag ?? dateTimeDigitized ?? imageDateTime;
 
   /// Alias für Dateierstellungs-/Änderungsdatum.
-  DateTime? get dateModified => fileLastModified ?? imageDateTime;
+  DateTime? get dateModified =>
+      dateModifiedTag ?? fileLastModified ?? imageDateTime;
 
   bool get hasGps => latitude != null && longitude != null;
 
-  /// Priorität: DateTimeOriginal → DateTimeDigitized → DateTime → Datei.
+  /// Priorität: Manual → DateTimeOriginal → Digitized → CreateDate →
+  /// Image DateTime → DateModified → Dateisystem.
   DateTime? resolveTakenAt({DateTime? manualDate}) {
     if (manualDate != null) return manualDate;
     return dateTimeOriginal ??
         dateTimeDigitized ??
+        createDateTag ??
         imageDateTime ??
+        dateModifiedTag ??
         fileLastModified;
   }
 
@@ -57,8 +70,22 @@ class PhotoExifMetadata {
     if (manualDate != null) return 'manual';
     if (dateTimeOriginal != null) return 'exif';
     if (dateTimeDigitized != null) return 'exif';
+    if (createDateTag != null) return 'exif';
     if (imageDateTime != null) return 'exif';
+    if (dateModifiedTag != null) return 'exif';
     if (fileLastModified != null) return 'file';
+    return 'unknown';
+  }
+
+  /// Debug-Diagnose (nur für Logs in Debug-Builds).
+  String debugDateSourceLabel({DateTime? manualDate}) {
+    if (manualDate != null) return 'manual';
+    if (dateTimeOriginal != null) return 'DateTimeOriginal';
+    if (dateTimeDigitized != null) return 'DateTimeDigitized';
+    if (createDateTag != null) return 'CreateDate';
+    if (imageDateTime != null) return 'ImageDateTime';
+    if (dateModifiedTag != null) return 'DateModified';
+    if (fileLastModified != null) return 'FileSystem';
     return 'unknown';
   }
 
@@ -67,7 +94,9 @@ class PhotoExifMetadata {
   PhotoExifMetadata copyWith({
     DateTime? dateTimeOriginal,
     DateTime? dateTimeDigitized,
+    DateTime? createDateTag,
     DateTime? imageDateTime,
+    DateTime? dateModifiedTag,
     DateTime? fileLastModified,
     double? latitude,
     double? longitude,
@@ -85,7 +114,9 @@ class PhotoExifMetadata {
     return PhotoExifMetadata(
       dateTimeOriginal: dateTimeOriginal ?? this.dateTimeOriginal,
       dateTimeDigitized: dateTimeDigitized ?? this.dateTimeDigitized,
+      createDateTag: createDateTag ?? this.createDateTag,
       imageDateTime: imageDateTime ?? this.imageDateTime,
+      dateModifiedTag: dateModifiedTag ?? this.dateModifiedTag,
       fileLastModified: fileLastModified ?? this.fileLastModified,
       latitude: clearLatitude ? null : (latitude ?? this.latitude),
       longitude: clearLongitude ? null : (longitude ?? this.longitude),
@@ -130,7 +161,17 @@ class ExifMetadataService {
         dateTimeDigitized: _parseExifDateTime(
           tags['EXIF DateTimeDigitized']?.printable,
         ),
+        createDateTag: _parseExifDateTime(
+          tags['EXIF CreateDate']?.printable ??
+              tags['Image CreateDate']?.printable ??
+              tags['EXIF MediaCreateDate']?.printable,
+        ),
         imageDateTime: _parseExifDateTime(tags['Image DateTime']?.printable),
+        dateModifiedTag: _parseExifDateTime(
+          tags['EXIF ModifyDate']?.printable ??
+              tags['Image ModifyDate']?.printable ??
+              tags['EXIF DateModified']?.printable,
+        ),
         fileLastModified: fileLastModified,
         latitude: GpsCoordinateParser.parseCoordinate(
           tags,

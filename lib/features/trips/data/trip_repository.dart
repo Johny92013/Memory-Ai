@@ -262,25 +262,179 @@ class TripRepository {
     String role = 'viewer',
   }) async {
     try {
+      final allowed = {'editor', 'contributor', 'viewer'};
+      final safeRole = allowed.contains(role) ? role : 'viewer';
       final profile = await _client
           .from('profiles')
           .select('id')
           .eq('email', email)
           .maybeSingle();
       if (profile == null) {
-        throw const AppException(message: 'Nutzer nicht gefunden.');
+        throw const AppException(
+          message:
+              'Die Reiseeinladung konnte nicht gesendet werden. Nutzer nicht gefunden.',
+        );
       }
       await _client.from('trip_members').upsert({
         'trip_id': tripId,
         'user_id': profile['id'],
-        'role': role,
-        'invitation_status': 'accepted',
+        'role': safeRole,
+        'invitation_status': 'pending',
         'invited_by': _userId,
-        'joined_at': DateTime.now().toUtc().toIso8601String(),
+        'joined_at': null,
       });
+    } catch (error) {
+      if (error is AppException) rethrow;
+      throw ErrorMapper.map(error);
+    }
+  }
+
+  Future<void> acceptTripInvite(String tripId) async {
+    try {
+      final updated = await _client
+          .from('trip_members')
+          .update({
+            'invitation_status': 'accepted',
+            'joined_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('trip_id', tripId)
+          .eq('user_id', _userId)
+          .eq('invitation_status', 'pending')
+          .select('id');
+      if ((updated as List).isEmpty) {
+        throw const AppException(
+          message: 'Die Reiseeinladung konnte nicht angenommen werden.',
+        );
+      }
+    } catch (error) {
+      if (error is AppException) rethrow;
+      throw ErrorMapper.map(error);
+    }
+  }
+
+  Future<void> declineTripInvite(String tripId) async {
+    try {
+      await _client
+          .from('trip_members')
+          .update({'invitation_status': 'declined'})
+          .eq('trip_id', tripId)
+          .eq('user_id', _userId)
+          .eq('invitation_status', 'pending');
     } catch (error) {
       throw ErrorMapper.map(error);
     }
+  }
+
+  Future<void> updateMemberRole({
+    required String tripId,
+    required String userId,
+    required String role,
+  }) async {
+    try {
+      await _client
+          .from('trip_members')
+          .update({'role': role})
+          .eq('trip_id', tripId)
+          .eq('user_id', userId);
+    } catch (error) {
+      throw ErrorMapper.map(error);
+    }
+  }
+
+  Future<void> removeMember({
+    required String tripId,
+    required String userId,
+  }) async {
+    try {
+      await _client
+          .from('trip_members')
+          .delete()
+          .eq('trip_id', tripId)
+          .eq('user_id', userId);
+    } catch (error) {
+      throw ErrorMapper.map(error);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listCompanions(String tripId) async {
+    try {
+      final rows = await _client
+          .from('trip_companions')
+          .select()
+          .eq('trip_id', tripId)
+          .order('created_at');
+      return (rows as List)
+          .map((r) => Map<String, dynamic>.from(r as Map))
+          .toList();
+    } catch (error) {
+      throw ErrorMapper.map(error);
+    }
+  }
+
+  Future<void> addCompanion({
+    required String tripId,
+    required String displayName,
+    String? notes,
+  }) async {
+    try {
+      final name = displayName.trim();
+      if (name.isEmpty) {
+        throw const AppException(message: 'Bitte einen Namen eingeben.');
+      }
+      await _client.from('trip_companions').insert({
+        'trip_id': tripId,
+        'display_name': name,
+        'notes': notes,
+        'created_by': _userId,
+      });
+    } catch (error) {
+      if (error is AppException) rethrow;
+      throw ErrorMapper.map(error);
+    }
+  }
+
+  Future<String> createInviteCode({
+    required String tripId,
+    String role = 'viewer',
+  }) async {
+    try {
+      final code = _randomInviteCode();
+      await _client.from('trip_invites').insert({
+        'trip_id': tripId,
+        'code': code,
+        'role': role,
+        'created_by': _userId,
+        'expires_at': DateTime.now()
+            .toUtc()
+            .add(const Duration(days: 14))
+            .toIso8601String(),
+      });
+      return code;
+    } catch (error) {
+      throw const AppException(
+        message: 'Die Reiseeinladung konnte nicht gesendet werden.',
+      );
+    }
+  }
+
+  Future<void> redeemInviteCode(String code) async {
+    try {
+      await _client.rpc('redeem_trip_invite', params: {'p_code': code.trim()});
+    } catch (error) {
+      throw ErrorMapper.map(error);
+    }
+  }
+
+  String _randomInviteCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final now = DateTime.now().microsecondsSinceEpoch;
+    final buf = StringBuffer();
+    var n = now;
+    for (var i = 0; i < 8; i++) {
+      buf.write(chars[n % chars.length]);
+      n = n ~/ chars.length + 17;
+    }
+    return buf.toString();
   }
 
   Future<Map<String, String>> _myRoles() async {

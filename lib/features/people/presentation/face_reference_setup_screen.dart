@@ -6,8 +6,8 @@ import 'package:memory_ai/app/app_colors.dart';
 import 'package:memory_ai/app/app_spacing.dart';
 import 'package:memory_ai/core/errors/error_mapper.dart';
 import 'package:memory_ai/features/people/data/face_consent_service.dart';
-import 'package:memory_ai/features/people/data/face_embedding_engine.dart';
 import 'package:memory_ai/features/people/data/face_reference_repository.dart';
+import 'package:memory_ai/features/people/data/mobile_facenet_embedding_engine.dart';
 import 'package:memory_ai/shared/widgets/app_button.dart';
 import 'package:memory_ai/shared/widgets/app_scaffold.dart';
 
@@ -24,7 +24,7 @@ class FaceReferenceSetupScreen extends StatefulWidget {
 class _FaceReferenceSetupScreenState extends State<FaceReferenceSetupScreen> {
   final _consent = FaceConsentService();
   final _refs = FaceReferenceRepository();
-  final _engine = LocalProjectionEmbeddingEngine();
+  final _engine = createFaceEmbeddingEngine();
   final _picker = ImagePicker();
 
   final List<Uint8List> _previews = [];

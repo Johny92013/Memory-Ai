@@ -361,11 +361,11 @@ abstract final class MapFilterEngine {
 /// Reproduzierbare Jahresfarben.
 abstract final class YearColorPalette {
   static const _seed = <int, Color>{
-    2022: Color(0xFF3B82F6), // Blau
-    2023: Color(0xFF22C55E), // Grün
-    2024: Color(0xFFF2A34C), // Orange
+    2022: Color(0xFF2563EB), // Blau
+    2023: Color(0xFF14B8A6), // Türkis
+    2024: Color(0xFFF59E0B), // Orange
     2025: Color(0xFF8B5CF6), // Violett
-    2026: Color(0xFFE85D6C), // Rot
+    2026: Color(0xFFEF5D68), // Koralle
   };
 
   static Color forYear(int year) {

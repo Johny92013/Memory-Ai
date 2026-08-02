@@ -9,9 +9,10 @@ import 'package:memory_ai/features/memories/data/media_item_model.dart';
 
 /// Vollbild-Album außerhalb der Bottom-Navigation-Shell.
 class AlbumViewerScreen extends StatefulWidget {
-  const AlbumViewerScreen({super.key, required this.session});
+  const AlbumViewerScreen({super.key, required this.session, this.onClose});
 
   final MemoryAlbumSession session;
+  final VoidCallback? onClose;
 
   @override
   State<AlbumViewerScreen> createState() => _AlbumViewerScreenState();
@@ -69,7 +70,7 @@ class _AlbumViewerScreenState extends State<AlbumViewerScreen> {
     final session = widget.session;
     if (session.items.isEmpty) {
       return Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.backgroundDark,
         body: SafeArea(
           child: Center(
             child: Column(
@@ -77,10 +78,11 @@ class _AlbumViewerScreenState extends State<AlbumViewerScreen> {
               children: [
                 const Text(
                   'Zu wenige Medien für ein Album.',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.textPrimary),
                 ),
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () =>
+                      (widget.onClose ?? () => Navigator.pop(context))(),
                   child: const Text('Zurück'),
                 ),
               ],
@@ -96,7 +98,7 @@ class _AlbumViewerScreenState extends State<AlbumViewerScreen> {
     ].join(' – ');
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -109,8 +111,12 @@ class _AlbumViewerScreenState extends State<AlbumViewerScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () =>
+                        (widget.onClose ?? () => Navigator.pop(context))(),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   Expanded(
                     child: Column(
@@ -119,7 +125,7 @@ class _AlbumViewerScreenState extends State<AlbumViewerScreen> {
                         Text(
                           session.title,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
                           ),
@@ -130,8 +136,8 @@ class _AlbumViewerScreenState extends State<AlbumViewerScreen> {
                               session.locationLabel!,
                             if (range.isNotEmpty) range,
                           ].join(' · '),
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
@@ -140,7 +146,7 @@ class _AlbumViewerScreenState extends State<AlbumViewerScreen> {
                   ),
                   Text(
                     '${_page + 1}/$_pageCount',
-                    style: const TextStyle(color: Colors.white70),
+                    style: const TextStyle(color: AppColors.textMuted),
                   ),
                 ],
               ),

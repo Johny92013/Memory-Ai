@@ -2,32 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:memory_ai/app/app_colors.dart';
 
-/// Zentrale TextStyles – Space Grotesk, Inter, JetBrains Mono.
+/// Typografie – Inter (klar, modern, international).
 abstract final class AppTypography {
   static TextTheme buildTextTheme() {
-    final inter = GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
-    final display = GoogleFonts.spaceGroteskTextTheme(inter);
+    final base = GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
 
-    return display.copyWith(
-      displayLarge: GoogleFonts.spaceGrotesk(
-        fontSize: 32,
+    return base.copyWith(
+      displayLarge: GoogleFonts.inter(
+        fontSize: 30,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
         height: 1.15,
       ),
-      headlineMedium: GoogleFonts.spaceGrotesk(
-        fontSize: 22,
+      headlineMedium: GoogleFonts.inter(
+        fontSize: 24,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
       ),
-      titleMedium: GoogleFonts.spaceGrotesk(
-        fontSize: 16,
-        fontWeight: FontWeight.w500,
+      titleLarge: GoogleFonts.inter(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      titleSmall: GoogleFonts.spaceGrotesk(
+      titleMedium: GoogleFonts.inter(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      ),
+      titleSmall: GoogleFonts.inter(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
       bodyLarge: GoogleFonts.inter(
@@ -58,16 +62,17 @@ abstract final class AppTypography {
       labelSmall: GoogleFonts.inter(
         fontSize: 11,
         fontWeight: FontWeight.w500,
-        color: AppColors.textSecondary,
+        color: AppColors.textMuted,
       ),
     );
   }
 
   static TextStyle statsMono({Color? color, double? fontSize}) {
-    return GoogleFonts.jetBrainsMono(
+    return GoogleFonts.inter(
       fontSize: fontSize ?? 13,
-      fontWeight: FontWeight.w500,
+      fontWeight: FontWeight.w600,
       color: color ?? AppColors.textPrimary,
+      letterSpacing: 0.2,
     );
   }
 }

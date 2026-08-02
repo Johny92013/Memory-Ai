@@ -38,6 +38,77 @@ class MediaRepository {
     return id;
   }
 
+  /// Galerie: eigene Medien und/oder akzeptierte Markierungen (keine Dateikopie).
+  Future<List<MediaItemModel>> listGalleryMedia({
+    required String filter,
+    int limit = 30,
+    int offset = 0,
+  }) async {
+    try {
+      if (filter == 'own') {
+        return listMyMedia(limit: limit, offset: offset);
+      }
+
+      if (filter == 'withMe' || filter == 'shared') {
+        final status = filter == 'withMe'
+            ? 'accepted_to_gallery'
+            : 'linked_only';
+        final tagRows = await _client
+            .from('media_people')
+            .select('media_item_id')
+            .eq('tagged_profile_id', _userId)
+            .eq('status', status);
+        final ids = (tagRows as List)
+            .map((r) => (r as Map)['media_item_id'] as String?)
+            .whereType<String>()
+            .toList();
+        if (ids.isEmpty) return [];
+        final rows = await _client
+            .from('media_items')
+            .select()
+            .inFilter('id', ids)
+            .order('taken_at', ascending: false)
+            .order('created_at', ascending: false)
+            .range(offset, offset + limit - 1);
+        return (rows as List)
+            .map(
+              (row) => MediaItemModel.fromJson(
+                Map<String, dynamic>.from(row as Map),
+              ),
+            )
+            .toList();
+      }
+
+      // all: eigene + accepted_to_gallery
+      final own = await listMyMedia(limit: limit, offset: offset);
+      if (offset > 0) return own;
+      final linked = await listGalleryMedia(
+        filter: 'withMe',
+        limit: limit,
+        offset: 0,
+      );
+      final byId = <String, MediaItemModel>{
+        for (final m in own) m.id: m,
+        for (final m in linked) m.id: m,
+      };
+      final merged = byId.values.toList()
+        ..sort((a, b) {
+          final at =
+              a.takenAt ??
+              a.createdAt ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          final bt =
+              b.takenAt ??
+              b.createdAt ??
+              DateTime.fromMillisecondsSinceEpoch(0);
+          return bt.compareTo(at);
+        });
+      return merged.take(limit).toList();
+    } catch (error) {
+      throw ErrorMapper.map(error);
+    }
+  }
+
   Future<List<MediaItemModel>> listMyMedia({
     int limit = 30,
     int offset = 0,

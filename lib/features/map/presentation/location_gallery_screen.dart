@@ -89,7 +89,11 @@ class _LocationGalleryScreenState extends State<LocationGalleryScreen> {
       locationLabel: widget.locationLabel ?? widget.cityName ?? 'Ort',
     );
     if (session == null || !mounted) return;
-    context.push('/map/album-viewer', extra: session);
+    if (session.albumId != null) {
+      context.push('/album/${session.albumId}');
+    } else {
+      context.push('/map/album-viewer', extra: session);
+    }
   }
 
   Future<void> _openSlideshow() async {

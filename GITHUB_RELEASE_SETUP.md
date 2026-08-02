@@ -162,7 +162,7 @@ Häufig:
 
 Aktuell im Projekt:
 
-- Android `applicationId`: `com.example.memory_ai`
+- Android `applicationId`: `com.johny92013.memoryai`
 - iOS Bundle ID: `com.johny92013.memoryai`
 
 Das sind Flutter-Platzhalter. Für echte Store-Einreichung eigene IDs registrieren und im Projekt + Secrets anpassen. Für CI muss `IOS_BUNDLE_ID` dem Xcode-Wert entsprechen und das Provisioning Profile denselben Identifier abdecken.

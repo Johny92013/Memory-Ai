@@ -15,10 +15,12 @@ import 'package:memory_ai/features/map/presentation/active_filter_chips.dart';
 import 'package:memory_ai/features/map/presentation/location_preview_sheet.dart';
 import 'package:memory_ai/features/map/presentation/map_filter_sheet.dart';
 import 'package:memory_ai/features/map/presentation/year_color_legend.dart';
+import 'package:memory_ai/features/map/widgets/photo_location_marker.dart';
+import 'package:memory_ai/features/map/widgets/travel_map_search_bar.dart';
 import 'package:memory_ai/features/memories/data/media_item_model.dart';
 import 'package:memory_ai/features/memories/data/people_repository.dart';
 import 'package:memory_ai/features/memories/data/person_model.dart';
-import 'package:memory_ai/shared/widgets/empty_state.dart';
+import 'package:memory_ai/shared/widgets/travel_ui.dart';
 
 /// OpenStreetMap-Weltkarte mit Filtern, Jahresfarben, Clustering und Vorschau.
 class WorldMapScreen extends StatefulWidget {
@@ -31,6 +33,7 @@ class WorldMapScreen extends StatefulWidget {
 class _WorldMapScreenState extends State<WorldMapScreen> {
   final _mapController = MapController();
   final _repo = MapRepository();
+  final _searchController = TextEditingController();
 
   List<MediaItemModel> _allItems = [];
   List<CountryStats> _countries = [];
@@ -49,6 +52,12 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
     PeopleRepository().listMyPeople().then((p) {
       if (mounted) setState(() => _people = p);
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -100,8 +109,22 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
       people: _people,
     );
     if (next == null) return;
-    setState(() => _filter = next);
+    setState(() {
+      _filter = next;
+      _searchController.text = next.locationQuery ?? '';
+    });
     await _load();
+  }
+
+  void _applySearch(String query) {
+    final trimmed = query.trim();
+    setState(
+      () => _filter = _filter.copyWith(
+        locationQuery: trimmed.isEmpty ? null : trimmed,
+        clearLocationQuery: trimmed.isEmpty,
+      ),
+    );
+    _load();
   }
 
   void _openCountry(CountryStats country) {
@@ -111,7 +134,6 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
   }
 
   void _showClusterPreview(MapMarkerCluster cluster) {
-    // Bei mehreren Gruppen: erste Gruppe als Vorschau; sonst Cluster-Sheet
     final group = cluster.groups.length == 1
         ? cluster.groups.first
         : MapLocationGroup(
@@ -162,96 +184,16 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
         ? _tripRoutePolylines()
         : const <Polyline>[];
     final years = YearColorPalette.yearsInItems(_allItems);
+    final mapWidth = MediaQuery.sizeOf(context).width;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.xl,
-            AppSpacing.lg,
-            AppSpacing.xl,
-            AppSpacing.sm,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Expanded(
+          child: Stack(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Weltkarte',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Filter',
-                    onPressed: _openFilters,
-                    icon: Badge(
-                      isLabelVisible: !_filter.isEmpty,
-                      child: const Icon(Icons.filter_list),
-                    ),
-                  ),
-                ],
-              ),
-              Text(
-                '${_allItems.length} Medien mit Standort'
-                '${_countries.isNotEmpty ? ' · ${_countries.length} Länder' : ''}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              ActiveFilterChips(
-                filter: _filter,
-                onChanged: (f) {
-                  setState(() => _filter = f);
-                  _load();
-                },
-              ),
-            ],
-          ),
-        ),
-        if (_loading)
-          const Expanded(child: Center(child: CircularProgressIndicator()))
-        else if (_error != null)
-          Expanded(
-            child: Center(
-              child: Text(
-                _error!,
-                style: const TextStyle(color: AppColors.error),
-              ),
-            ),
-          )
-        else if (_allItems.isEmpty)
-          Expanded(
-            child: EmptyState(
-              icon: Icons.public_off_outlined,
-              title: _filter.isEmpty
-                  ? 'Noch keine Orte auf deiner Weltkarte'
-                  : 'Keine Treffer für diese Filter',
-              subtitle: _filter.isEmpty
-                  ? 'Lade Fotos oder Videos mit Standortdaten hoch oder ergänze den Standort manuell.'
-                  : 'Passe die Filter an oder lösche sie.',
-              buttonLabel: _filter.isEmpty
-                  ? 'Medien hinzufügen'
-                  : 'Alle Filter löschen',
-              onButtonPressed: _filter.isEmpty
-                  ? () => context.push('/memories/upload')
-                  : () {
-                      setState(() => _filter = const MapFilterState());
-                      _load();
-                    },
-            ),
-          )
-        else
-          Expanded(
-            child: Stack(
-              children: [
-                ClipRRect(
+              Positioned.fill(
+                child: ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(AppRadius.sheet),
                   ),
@@ -265,108 +207,182 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
                     children: [
                       TileLayer(
                         urlTemplate:
-                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        subdomains: const ['a', 'b', 'c'],
-                        userAgentPackageName: 'memory_ai',
+                            'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                        subdomains: const ['a', 'b', 'c', 'd'],
+                        userAgentPackageName: 'com.johny92013.memoryai',
                       ),
-                      if (routePolylines.isNotEmpty)
-                        PolylineLayer(polylines: routePolylines),
-                      MarkerLayer(
-                        markers: _currentZoom < 6
-                            ? _countries.map(_countryMarker).toList()
-                            : _clusters.map(_clusterMarker).toList(),
-                      ),
+                      if (!_loading &&
+                          _error == null &&
+                          _allItems.isNotEmpty) ...[
+                        if (routePolylines.isNotEmpty)
+                          PolylineLayer(polylines: routePolylines),
+                        MarkerLayer(
+                          markers: _currentZoom < 6
+                              ? _countries.map(_countryMarker).toList()
+                              : _clusters.map(_clusterMarker).toList(),
+                        ),
+                      ],
                     ],
                   ),
                 ),
+              ),
+              if (_loading)
+                const Positioned.fill(
+                  child: ColoredBox(
+                    color: Color(0x88071624),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                )
+              else if (_error != null)
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: AppColors.backgroundDark.withValues(alpha: 0.85),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xl),
+                        child: Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: AppColors.error),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else if (_allItems.isEmpty)
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: AppColors.backgroundDark.withValues(alpha: 0.55),
+                    child: EmptyTravelState(
+                      icon: Icons.public_outlined,
+                      title: _filter.isEmpty
+                          ? 'Deine Weltkarte ist noch leer'
+                          : 'Keine Treffer für diese Filter',
+                      message: _filter.isEmpty
+                          ? 'Lade Fotos oder Videos mit Standortdaten hoch und entdecke deine Reisen auf der Weltkarte.'
+                          : 'Passe die Filter an oder lösche sie.',
+                      buttonLabel: _filter.isEmpty
+                          ? 'Erinnerung hinzufügen'
+                          : 'Alle Filter löschen',
+                      onPressed: _filter.isEmpty
+                          ? () => context.push('/memories/upload')
+                          : () {
+                              setState(() {
+                                _filter = const MapFilterState();
+                                _searchController.clear();
+                              });
+                              _load();
+                            },
+                    ),
+                  ),
+                ),
+              Positioned(
+                left: AppSpacing.md,
+                right: AppSpacing.md,
+                top: AppSpacing.md,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TravelMapSearchBar(
+                      controller: _searchController,
+                      hasActiveFilters: !_filter.isEmpty,
+                      onFilterPressed: _openFilters,
+                      onSubmitted: _applySearch,
+                    ),
+                    ActiveFilterChips(
+                      filter: _filter,
+                      onChanged: (f) {
+                        setState(() {
+                          _filter = f;
+                          _searchController.text = f.locationQuery ?? '';
+                        });
+                        _load();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              if (!_loading && _error == null && years.isNotEmpty)
                 Positioned(
                   right: AppSpacing.md,
-                  top: AppSpacing.md,
-                  child: YearColorLegend(years: years),
+                  bottom: _countries.isNotEmpty ? 132 : AppSpacing.md,
+                  child: SizedBox(
+                    width: mapWidth * 0.2,
+                    child: YearColorLegend(years: years),
+                  ),
                 ),
-              ],
-            ),
+              if (!_loading && _countries.isNotEmpty)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    height: 120,
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.sm,
+                      AppSpacing.lg,
+                      AppSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          AppColors.backgroundDark.withValues(alpha: 0.75),
+                        ],
+                      ),
+                    ),
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _countries.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(width: AppSpacing.sm),
+                      itemBuilder: (context, index) {
+                        final country = _countries[index];
+                        return _CountryCard(
+                          country: country,
+                          onTap: () => _openCountry(country),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+            ],
           ),
-        if (!_loading && _countries.isNotEmpty)
-          Container(
-            height: 120,
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.sm,
-              AppSpacing.lg,
-              AppSpacing.sm,
-            ),
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _countries.length,
-              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
-              itemBuilder: (context, index) {
-                final country = _countries[index];
-                return _CountryCard(
-                  country: country,
-                  onTap: () => _openCountry(country),
-                );
-              },
-            ),
-          ),
+        ),
       ],
     );
   }
 
   Marker _countryMarker(CountryStats country) {
     final color = country.years.isEmpty
-        ? AppColors.accentWarm
+        ? AppColors.turquoise
         : YearColorPalette.forYear(country.years.last);
     return Marker(
       point: LatLng(country.centerLatitude, country.centerLongitude),
-      width: 56,
-      height: 56,
-      child: GestureDetector(
+      width: 64,
+      height: 72,
+      child: TravelMapClusterMarker(
+        count: country.photoCount,
+        color: color,
         onTap: () => _openCountry(country),
-        child: Container(
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.92),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '${country.photoCount}',
-            style: const TextStyle(
-              color: AppColors.background,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
       ),
     );
   }
 
   Marker _clusterMarker(MapMarkerCluster cluster) {
     final items = [for (final g in cluster.groups) ...g.items];
-    final color = YearColorPalette.forItems(items);
     return Marker(
       point: LatLng(cluster.latitude, cluster.longitude),
-      width: 48,
-      height: 48,
-      child: GestureDetector(
+      width: 64,
+      height: 78,
+      child: PhotoLocationMarker(
+        items: items,
+        count: cluster.count,
         onTap: () => _showClusterPreview(cluster),
-        child: Container(
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.92),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '${cluster.count}',
-            style: const TextStyle(
-              color: AppColors.background,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -387,28 +403,38 @@ class _CountryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 140,
-        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.cardBackground.withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border(left: BorderSide(color: color, width: 4)),
+          border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+        clipBehavior: Clip.antiAlias,
+        child: Row(
           children: [
-            Text(
-              country.countryName,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              '${country.photoCount} Medien',
-              style: context.appTheme.statsMono.copyWith(
-                fontSize: 11,
-                color: AppColors.textSecondary,
+            Container(width: 4, color: color),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      country.countryName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      '${country.photoCount} Medien',
+                      style: context.appTheme.statsMono.copyWith(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

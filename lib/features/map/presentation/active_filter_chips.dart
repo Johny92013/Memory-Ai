@@ -28,11 +28,15 @@ class ActiveFilterChips extends StatelessWidget {
         children: [
           ...chips.map(
             (c) => InputChip(
-              label: Text(c.label),
+              label: Text(
+                c.label,
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
+              backgroundColor: AppColors.turquoise.withValues(alpha: 0.18),
               onDeleted: () => onChanged(filter.removeChip(c.id)),
-              deleteIconColor: AppColors.textSecondary,
+              deleteIconColor: AppColors.turquoise,
               side: BorderSide(
-                color: AppColors.accentWarm.withValues(alpha: 0.4),
+                color: AppColors.turquoise.withValues(alpha: 0.45),
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.chip),
@@ -43,6 +47,8 @@ class ActiveFilterChips extends StatelessWidget {
             label: const Text('Alle Filter löschen'),
             onPressed: () => onChanged(const MapFilterState()),
             avatar: const Icon(Icons.clear_all, size: 16),
+            backgroundColor: AppColors.cardElevated,
+            side: BorderSide(color: AppColors.divider.withValues(alpha: 0.6)),
           ),
         ],
       ),

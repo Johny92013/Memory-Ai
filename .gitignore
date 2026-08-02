@@ -78,3 +78,9 @@ app.*.map.json
 # Android local Gradle build output
 android/build/
 
+
+# Local packaged binaries
+/release/
+*.apk
+*.ipa
+

@@ -199,7 +199,8 @@ void main() {
       expect(find.text('Start'), findsOneWidget);
       expect(find.text('Erinnerungen'), findsOneWidget);
       expect(find.text('Karte'), findsOneWidget);
-      expect(find.text('Chat'), findsOneWidget);
+      expect(find.text('Profil'), findsOneWidget);
+      expect(find.text('Chat'), findsNothing);
       expect(find.byIcon(Icons.add), findsOneWidget);
     });
 

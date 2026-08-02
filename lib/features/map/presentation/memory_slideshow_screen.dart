@@ -91,7 +91,7 @@ class _MemorySlideshowScreenState extends State<MemorySlideshowScreen> {
   Widget build(BuildContext context) {
     if (_items.isEmpty) {
       return Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: AppColors.backgroundDark,
         body: Center(
           child: TextButton(
             onPressed: () => Navigator.pop(context),
@@ -105,7 +105,7 @@ class _MemorySlideshowScreenState extends State<MemorySlideshowScreen> {
     final progress = (_index + 1) / _items.length;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: Stack(
           children: [
@@ -124,7 +124,7 @@ class _MemorySlideshowScreenState extends State<MemorySlideshowScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 450),
+                    duration: const Duration(milliseconds: 250),
                     child: CachedNetworkImage(
                       key: ValueKey(item.id),
                       imageUrl: url,
@@ -148,19 +148,22 @@ class _MemorySlideshowScreenState extends State<MemorySlideshowScreen> {
                 children: [
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Colors.white),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   Expanded(
                     child: LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: Colors.white24,
-                      color: AppColors.accentWarm,
+                      backgroundColor: AppColors.divider,
+                      color: AppColors.turquoise,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '${_index + 1}/${_items.length}',
-                    style: const TextStyle(color: Colors.white70),
+                    style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -180,8 +183,8 @@ class _MemorySlideshowScreenState extends State<MemorySlideshowScreen> {
                   ].join(' · '),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Colors.white,
-                    shadows: [Shadow(blurRadius: 8, color: Colors.black)],
+                    color: AppColors.textPrimary,
+                    shadows: [Shadow(blurRadius: 8, color: Colors.black54)],
                   ),
                 ),
               ),
@@ -194,19 +197,25 @@ class _MemorySlideshowScreenState extends State<MemorySlideshowScreen> {
                 children: [
                   IconButton(
                     onPressed: _prev,
-                    icon: const Icon(Icons.skip_previous, color: Colors.white),
+                    icon: const Icon(
+                      Icons.skip_previous,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   IconButton(
                     onPressed: _togglePlay,
                     icon: Icon(
                       _playing ? Icons.pause_circle : Icons.play_circle,
-                      color: Colors.white,
+                      color: AppColors.turquoise,
                       size: 48,
                     ),
                   ),
                   IconButton(
                     onPressed: _next,
-                    icon: const Icon(Icons.skip_next, color: Colors.white),
+                    icon: const Icon(
+                      Icons.skip_next,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ],
               ),

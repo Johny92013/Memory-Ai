@@ -1,4 +1,4 @@
-package com.example.memory_ai
+package com.johny92013.memoryai
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -11,15 +11,27 @@ class UserGreeting extends StatelessWidget {
     required this.subtitle,
     this.profile,
     this.onProfileTap,
+    this.compactAvatarOnly = false,
   });
 
   final String greeting;
   final String subtitle;
   final ProfileModel? profile;
   final VoidCallback? onProfileTap;
+  final bool compactAvatarOnly;
 
   @override
   Widget build(BuildContext context) {
+    final avatar = ProfileAvatar(
+      radius: compactAvatarOnly ? 22 : 26,
+      avatarPath: profile?.avatarPath,
+      firstName: profile?.firstName,
+      lastName: profile?.lastName,
+      displayName: profile?.displayName,
+      onTap: onProfileTap,
+    );
+    if (compactAvatarOnly) return avatar;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -53,14 +65,7 @@ class UserGreeting extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        ProfileAvatar(
-          radius: 26,
-          avatarPath: profile?.avatarPath,
-          firstName: profile?.firstName,
-          lastName: profile?.lastName,
-          displayName: profile?.displayName,
-          onTap: onProfileTap,
-        ),
+        avatar,
       ],
     );
   }

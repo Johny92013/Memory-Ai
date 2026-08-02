@@ -27,7 +27,7 @@ class AdminRepository {
 
   Future<int> countMemories() async {
     try {
-      final rows = await _client.from('memories').select('id');
+      final rows = await _client.from('media_items').select('id');
       return (rows as List).length;
     } catch (error) {
       throw ErrorMapper.map(error);
