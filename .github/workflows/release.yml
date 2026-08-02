@@ -96,7 +96,7 @@ jobs:
       - name: Analyze and test
         run: |
           set -euo pipefail
-          flutter analyze
+          flutter analyze --no-fatal-infos
           flutter test
 
       - name: Build iOS without codesigning

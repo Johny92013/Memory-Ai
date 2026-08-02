@@ -76,10 +76,10 @@ class AlbumRepository {
             'description': description,
             'created_by': uid,
             'owner_id': uid,
-            if (familyId != null) 'family_id': familyId,
-            if (tripId != null) 'trip_id': tripId,
-            if (coverMediaId != null) 'cover_media_id': coverMediaId,
-            if (coverPath != null) 'cover_path': coverPath,
+            'family_id': ?familyId,
+            'trip_id': ?tripId,
+            'cover_media_id': ?coverMediaId,
+            'cover_path': ?coverPath,
             'album_type': albumType,
             'layout': layout,
           })
@@ -111,11 +111,11 @@ class AlbumRepository {
   }) async {
     try {
       final patch = <String, dynamic>{
-        if (title != null) 'title': title,
-        if (description != null) 'description': description,
-        if (layout != null) 'layout': layout,
-        if (coverPath != null) 'cover_path': coverPath,
-        if (coverMediaId != null) 'cover_media_id': coverMediaId,
+        'title': ?title,
+        'description': ?description,
+        'layout': ?layout,
+        'cover_path': ?coverPath,
+        'cover_media_id': ?coverMediaId,
         if (clearCover) ...{'cover_media_id': null, 'cover_path': null},
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
